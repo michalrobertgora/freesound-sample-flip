@@ -38,7 +38,7 @@ export const PAGE_SIZE = 150;
 
 /** Everything ticket 03's cards need, fetched up front. */
 export const SOUND_FIELDS =
-  "id,name,username,duration,type,license,tags,url,previews,images";
+  "id,name,username,duration,type,samplerate,license,tags,url,previews,images";
 
 export interface FreesoundSound {
   id: number;
@@ -46,6 +46,7 @@ export interface FreesoundSound {
   username: string;
   duration: number;
   type: string;
+  samplerate: number;
   license: string;
   tags: string[];
   /** Freesound page for the sound. */

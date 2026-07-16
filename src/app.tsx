@@ -7,6 +7,7 @@ import {
   type FreesoundError,
 } from "./lib/freesound";
 import { resolveSeededSet, type FreesoundSound } from "./lib/resolveSet";
+import { formatDuration, formatSampleRate, licenseLabel } from "./lib/display";
 
 const KEY_STORAGE = "freesound-api-key";
 
@@ -49,12 +50,39 @@ async function generateSet(): Promise<void> {
   const token = apiKey.value;
   if (!token) return;
   const id = ++generation;
+  stopPlayback();
   setState.value = { status: "loading" };
   const result = await resolveSeededSet((url) => fetch(url), token, appState.value);
   if (id !== generation) return; // a newer generate superseded this one
   setState.value = result.ok
     ? { status: "ok", sounds: result.sounds }
     : { status: "error", error: result.error };
+}
+
+/** One shared audio element: starting a sample stops the previous one. */
+const playingId = signal<number | null>(null);
+const audio = new Audio();
+audio.addEventListener("ended", () => {
+  playingId.value = null;
+});
+
+function stopPlayback(): void {
+  audio.pause();
+  playingId.value = null;
+}
+
+function togglePlay(sound: FreesoundSound): void {
+  if (playingId.value === sound.id) {
+    stopPlayback();
+    return;
+  }
+  const src = sound.previews["preview-hq-mp3"] ?? Object.values(sound.previews)[0];
+  if (!src) return;
+  audio.src = src;
+  playingId.value = sound.id;
+  audio.play().catch(() => {
+    if (playingId.value === sound.id) playingId.value = null;
+  });
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -187,6 +215,70 @@ function CountSection() {
   );
 }
 
+function SoundCard({ sound }: { sound: FreesoundSound }) {
+  const playing = playingId.value === sound.id;
+  const preview =
+    sound.previews["preview-hq-mp3"] ?? Object.values(sound.previews)[0];
+  return (
+    <article class={playing ? "card playing" : "card"}>
+      {sound.images?.["waveform_m"] && (
+        <img class="waveform" src={sound.images["waveform_m"]} alt="" loading="lazy" />
+      )}
+      <div class="card-body">
+        <h3 class="card-title">
+          <a href={sound.url} target="_blank" rel="noreferrer">
+            {sound.name}
+          </a>
+        </h3>
+        <p class="muted small">by {sound.username}</p>
+        <p class="meta small">
+          <span>{formatDuration(sound.duration)}</span>
+          <span>
+            {sound.type.toUpperCase()}
+            {sound.samplerate ? ` · ${formatSampleRate(sound.samplerate)}` : ""}
+          </span>
+          <span class="badge" title={sound.license}>
+            {licenseLabel(sound.license)}
+          </span>
+        </p>
+        {sound.tags.length > 0 && (
+          <p class="tags small">
+            {sound.tags.slice(0, 5).map((t) => (
+              <span class="tag" key={t}>
+                {t}
+              </span>
+            ))}
+          </p>
+        )}
+        <p class="actions">
+          <button onClick={() => togglePlay(sound)} disabled={!preview}>
+            {playing ? "⏸ Stop" : "▶ Play"}
+          </button>
+          {preview && (
+            <a class="small" href={preview} target="_blank" rel="noreferrer">
+              Download preview (lossy mp3)
+            </a>
+          )}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <article class="card skeleton" aria-hidden="true">
+      <div class="waveform shimmer" />
+      <div class="card-body">
+        <div class="line shimmer" style={{ width: "70%" }} />
+        <div class="line shimmer" style={{ width: "40%" }} />
+        <div class="line shimmer" style={{ width: "85%" }} />
+        <div class="line shimmer" style={{ width: "55%" }} />
+      </div>
+    </article>
+  );
+}
+
 function ResultsPane() {
   const s = setState.value;
   return (
@@ -195,7 +287,13 @@ function ResultsPane() {
       {s.status === "idle" && (
         <p class="muted">Enter your key, tune the filters, hit Generate.</p>
       )}
-      {s.status === "loading" && <p class="status muted">Resolving the set…</p>}
+      {s.status === "loading" && (
+        <div class="sound-grid">
+          {Array.from({ length: appState.value.sampleCount }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      )}
       {s.status === "error" && (
         <>
           {errorMessage(s.error)}
@@ -203,18 +301,11 @@ function ResultsPane() {
         </>
       )}
       {s.status === "ok" && (
-        <ol class="sound-list">
+        <div class="sound-grid">
           {s.sounds.map((sound) => (
-            <li key={sound.id}>
-              <a href={sound.url} target="_blank" rel="noreferrer">
-                {sound.name}
-              </a>{" "}
-              <span class="muted small">
-                #{sound.id} by {sound.username}
-              </span>
-            </li>
+            <SoundCard key={sound.id} sound={sound} />
           ))}
-        </ol>
+        </div>
       )}
     </main>
   );
