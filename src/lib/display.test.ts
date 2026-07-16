@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatSampleRate, licenseLabel } from "./display";
+import { formatDuration, formatSampleRate, licenseLabel, previewUrl } from "./display";
 
 describe("licenseLabel", () => {
   it("maps Creative Commons license URLs to short badges", () => {
@@ -27,6 +27,20 @@ describe("formatDuration", () => {
   it("shows minute durations as m:ss", () => {
     expect(formatDuration(60)).toBe("1:00");
     expect(formatDuration(125.7)).toBe("2:06");
+  });
+
+  it("never renders 60 seconds (regression: 119.7 was 1:60)", () => {
+    expect(formatDuration(119.7)).toBe("2:00");
+    expect(formatDuration(59.96)).toBe("59.9s");
+    expect(formatDuration(179.5)).toBe("3:00");
+  });
+});
+
+describe("previewUrl", () => {
+  it("prefers HQ mp3, falls back to any variant, undefined when none", () => {
+    expect(previewUrl({ "preview-lq-ogg": "lq", "preview-hq-mp3": "hq" })).toBe("hq");
+    expect(previewUrl({ "preview-lq-ogg": "lq" })).toBe("lq");
+    expect(previewUrl({})).toBeUndefined();
   });
 });
 

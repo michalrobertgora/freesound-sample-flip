@@ -7,7 +7,12 @@ import {
   type FreesoundError,
 } from "./lib/freesound";
 import { resolveSeededSet, type FreesoundSound } from "./lib/resolveSet";
-import { formatDuration, formatSampleRate, licenseLabel } from "./lib/display";
+import {
+  formatDuration,
+  formatSampleRate,
+  licenseLabel,
+  previewUrl,
+} from "./lib/display";
 
 const KEY_STORAGE = "freesound-api-key";
 
@@ -62,7 +67,14 @@ async function generateSet(): Promise<void> {
 /** One shared audio element: starting a sample stops the previous one. */
 const playingId = signal<number | null>(null);
 const audio = new Audio();
-audio.addEventListener("ended", () => {
+// `pause` also fires on ended and on OS-level pauses (media keys); the
+// paused check keeps a queued event from clearing a just-started track.
+const syncPlayingFromAudio = () => {
+  if (audio.paused) playingId.value = null;
+};
+audio.addEventListener("ended", syncPlayingFromAudio);
+audio.addEventListener("pause", syncPlayingFromAudio);
+audio.addEventListener("error", () => {
   playingId.value = null;
 });
 
@@ -76,7 +88,7 @@ function togglePlay(sound: FreesoundSound): void {
     stopPlayback();
     return;
   }
-  const src = sound.previews["preview-hq-mp3"] ?? Object.values(sound.previews)[0];
+  const src = previewUrl(sound.previews);
   if (!src) return;
   audio.src = src;
   playingId.value = sound.id;
@@ -217,8 +229,7 @@ function CountSection() {
 
 function SoundCard({ sound }: { sound: FreesoundSound }) {
   const playing = playingId.value === sound.id;
-  const preview =
-    sound.previews["preview-hq-mp3"] ?? Object.values(sound.previews)[0];
+  const preview = previewUrl(sound.previews);
   return (
     <article class={playing ? "card playing" : "card"}>
       {sound.images?.["waveform_m"] && (
