@@ -73,13 +73,19 @@ deliberately, with both participants updating at the same time.
 
 ## Deploying
 
+**Live at <https://michalrobertgora.github.io/freesound-sample-flip/>.**
+
 `npm run build` emits plain static files in `dist/` with relative asset paths
 (`base: "./"`), so they work from a domain root **or** any subpath:
 
 - **Any static host / nginx**: copy `dist/` wherever the server can see it.
   No headers, rewrites, or server logic needed.
-- **GitHub Pages**: push `dist/` to a `gh-pages` branch (or use an action);
-  the relative base means `https://user.github.io/repo/` just works.
+- **GitHub Pages (current setup)**: Pages serves the `gh-pages` branch; run
+  `./deploy.ps1` to build and republish. The repo also carries a
+  `.github/workflows/deploy.yml` that auto-deploys on push to `master` —
+  it's currently blocked by a GitHub Actions billing lock on the account;
+  once that's resolved, flip Pages back to "GitHub Actions" mode in the repo
+  settings and retire the script.
 
 There is no backend and no proxy — the app talks to
 `https://freesound.org/apiv2/` directly (CORS is open for token auth).
