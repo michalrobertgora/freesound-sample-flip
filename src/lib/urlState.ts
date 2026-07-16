@@ -143,9 +143,3 @@ export function serializeState(s: AppState): string {
 
   return q.toString();
 }
-
-/** Write state into the address bar without adding a history entry. */
-export function pushStateToUrl(s: AppState): void {
-  const qs = serializeState(s);
-  history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
-}

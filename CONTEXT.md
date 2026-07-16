@@ -1,0 +1,48 @@
+# CONTEXT.md — Cotygodniowy Flip
+
+Domain glossary for the weekly sample challenge. Use these terms exactly in
+issues, tests, and proposals; the *Avoid* notes are deliberate.
+
+## Domain terms
+
+- **Week** — an ISO week string `YYYY-Www` (Monday start; week 1 contains
+  Jan 4; some years have 53). The challenge's unit of time.
+- **Salt** — a free-text reroll token both participants agree on ("take2");
+  part of the seed. Empty and whitespace-only are the same salt.
+- **Seed string** — `week|salt|sampleCount|query|canonicalFilter`. The
+  **cross-machine contract**: identical inputs must produce this byte-for-byte
+  on every machine, pinned by golden-value tests. Change it only deliberately
+  and for both participants at once.
+- **Canonical filter string** — the deterministic serialization of filters
+  (fixed key order, sorted deduped multi-values, quantized numbers). Feeds
+  both the seed and the API's `filter=` parameter.
+- **Seeded mode** — the default resolution mode: count → quantize → cap →
+  seeded draw of indices → pages sorted `created_asc`.
+- **Locked set** — a set pinned by explicit sound IDs (`ids=` in the URL);
+  bypasses the seeded pipeline entirely. Whoever generates first defines the
+  week's set. *Avoid:* "saved set", "playlist".
+- **Lock-clearing invariant** — editing any control while a lock is active
+  clears the lock and resets the shown set; controls and set never silently
+  diverge. Owned by the app store; side effects wired via `onLockCleared`.
+- **Slot** — one position in a resolved set, in draw order: a sound, or a
+  **missing sound** placeholder when Freesound deleted it.
+- **Count** — the live number of sounds matching the filters. Quantized
+  (two-significant-figure floor) before seeding so mid-week uploads rarely
+  move the draw range.
+
+## Modules and seams
+
+- **App store** (`src/lib/appStore.ts`) — deep module owning URL-backed app
+  state and the lock-clearing invariant. Seam: the **URL adapter**
+  (browser history in the app, recording fake in tests).
+- **Player** (`src/lib/player.ts`) — deep module owning the one shared audio
+  element. Interface: `playingId`, `toggle(id, src)`, `stop()`. Domain-free.
+- **Set resolution** (`src/lib/resolveSet.ts`) — the seam between app state
+  and the network: state + transport in, resolved set or typed error out.
+- **Transport** (`src/lib/freesound.ts`) — fetch-shaped adapter; real `fetch`
+  in the app, fakes in tests. The seam every network test crosses.
+- **Composition root** (`src/app.tsx`) — wiring only: creates nothing but
+  connections between the modules above and renders `src/components/`.
+
+*Avoid:* "component"/"service" for modules; "random" for the draw (it is
+deterministic); "session" for week.
