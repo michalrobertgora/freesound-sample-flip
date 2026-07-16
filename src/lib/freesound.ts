@@ -51,15 +51,19 @@ async function readDetail(res: TransportResponse): Promise<string> {
   }
 }
 
-export async function fetchCount(
+/**
+ * One GET through the transport with the status cascade every Freesound
+ * endpoint shares (throw → unexpected, 401 → invalid-key, 429 →
+ * rate-limited with detail, other → unexpected). Callers validate the
+ * body shape.
+ */
+export async function requestJson(
   transport: Transport,
-  token: string,
-  query: string,
-  filter: string,
-): Promise<CountResult> {
+  url: string,
+): Promise<{ ok: true; body: unknown } | { ok: false; error: FreesoundError }> {
   let res: TransportResponse;
   try {
-    res = await transport(buildCountUrl(token, query, filter));
+    res = await transport(url);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { ok: false, error: { kind: "unexpected", message } };
@@ -80,18 +84,29 @@ export async function fetchCount(
   }
 
   try {
-    const body = (await res.json()) as { count?: unknown };
-    if (typeof body?.count !== "number") {
-      return {
-        ok: false,
-        error: { kind: "unexpected", message: "response has no count" },
-      };
-    }
-    return { ok: true, count: body.count };
+    return { ok: true, body: await res.json() };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { ok: false, error: { kind: "unexpected", message } };
   }
+}
+
+export async function fetchCount(
+  transport: Transport,
+  token: string,
+  query: string,
+  filter: string,
+): Promise<CountResult> {
+  const r = await requestJson(transport, buildCountUrl(token, query, filter));
+  if (!r.ok) return r;
+  const count = (r.body as { count?: unknown })?.count;
+  if (typeof count !== "number") {
+    return {
+      ok: false,
+      error: { kind: "unexpected", message: "response has no count" },
+    };
+  }
+  return { ok: true, count };
 }
 
 /**

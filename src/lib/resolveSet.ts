@@ -16,9 +16,9 @@ import { canonicalFilterString, normalizeText, seedString } from "./filters";
 import {
   API_BASE,
   fetchCount,
+  requestJson,
   type FreesoundError,
   type Transport,
-  type TransportResponse,
 } from "./freesound";
 import { drawDistinctIndices, quantizeCount, seededRng } from "./prng";
 import type { AppState } from "./urlState";
@@ -81,42 +81,16 @@ async function fetchPage(
   transport: Transport,
   url: string,
 ): Promise<{ ok: true; results: unknown[] } | { ok: false; error: FreesoundError }> {
-  let res: TransportResponse;
-  try {
-    res = await transport(url);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: { kind: "unexpected", message } };
+  const r = await requestJson(transport, url);
+  if (!r.ok) return r;
+  const results = (r.body as { results?: unknown })?.results;
+  if (!Array.isArray(results)) {
+    return {
+      ok: false,
+      error: { kind: "unexpected", message: "response has no results" },
+    };
   }
-
-  if (res.status === 401) return { ok: false, error: { kind: "invalid-key" } };
-  if (res.status === 429) {
-    let detail = "";
-    try {
-      const body = (await res.json()) as { detail?: unknown };
-      if (typeof body?.detail === "string") detail = body.detail;
-    } catch {
-      /* body unreadable; empty detail */
-    }
-    return { ok: false, error: { kind: "rate-limited", detail } };
-  }
-  if (res.status !== 200) {
-    return { ok: false, error: { kind: "unexpected", message: `HTTP ${res.status}` } };
-  }
-
-  try {
-    const body = (await res.json()) as { results?: unknown };
-    if (!Array.isArray(body?.results)) {
-      return {
-        ok: false,
-        error: { kind: "unexpected", message: "response has no results" },
-      };
-    }
-    return { ok: true, results: body.results };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: { kind: "unexpected", message } };
-  }
+  return { ok: true, results };
 }
 
 /** Resolve the week's set deterministically from (week, salt, count, filters). */
