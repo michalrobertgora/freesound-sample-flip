@@ -71,6 +71,56 @@ describe("canonicalFilterString", () => {
   });
 });
 
+describe("advanced filters (ticket 06)", () => {
+  it("keeps non-advanced canonical strings byte-identical (backward-compatible seeds)", () => {
+    // The exact strings older tests pinned — advanced defaults add nothing.
+    expect(canonicalFilterString(base)).toBe("duration:[0.5 TO 30]");
+    expect(
+      canonicalFilterString({ ...base, types: ["wav", "aiff"], tags: ["drone"] }),
+    ).toBe("duration:[0.5 TO 30] tag:drone type:(aiff OR wav)");
+  });
+
+  it("emits every advanced part in the fixed key order", () => {
+    const s = canonicalFilterString({
+      ...base,
+      ratingMin: 4,
+      boominessMin: 30,
+      brightnessMin: 55,
+      createdFrom: "2020-01-01",
+      createdTo: null,
+      geo: { lat: 41.3833, lon: 2.1833, radiusKm: 10 },
+      hardnessMin: 20,
+      loopable: true,
+      singleEvent: true,
+      tonality: "C minor",
+      warmthMin: 60,
+    });
+    expect(s).toBe(
+      "avg_rating:[4 TO *] boominess:[30 TO *] brightness:[55 TO *] " +
+        "created:[2020-01-01T00:00:00Z TO *] duration:[0.5 TO 30] " +
+        "{!geofilt sfield=geotag pt=41.3833,2.1833 d=10} " +
+        'hardness:[20 TO *] loopable:true single_event:true tonality:"C minor" ' +
+        "warmth:[60 TO *]",
+    );
+  });
+
+  it("quantizes geo coordinates to 4 decimals, stably", () => {
+    const a = canonicalFilterString({
+      ...base,
+      durationMin: null,
+      durationMax: null,
+      geo: { lat: 52.229731, lon: 21.012228, radiusKm: 25 },
+    });
+    expect(a).toBe("{!geofilt sfield=geotag pt=52.2297,21.0122 d=25}");
+  });
+
+  it("keeps tonality case exactly as chosen (Solr string match is case-sensitive)", () => {
+    expect(
+      canonicalFilterString({ ...base, durationMin: null, durationMax: null, tonality: "A# major" }),
+    ).toBe('tonality:"A# major"');
+  });
+});
+
 describe("seedString", () => {
   it("is stable for equivalent inputs", () => {
     const a = seedString("2026-W29", " Reroll ", 4, {

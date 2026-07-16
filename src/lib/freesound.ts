@@ -77,9 +77,14 @@ export async function requestJson(
     };
   }
   if (res.status !== 200) {
+    // 400s carry a useful `detail` (e.g. which filter field Solr rejected).
+    const detail = await readDetail(res);
     return {
       ok: false,
-      error: { kind: "unexpected", message: `HTTP ${res.status}` },
+      error: {
+        kind: "unexpected",
+        message: detail ? `HTTP ${res.status}: ${detail}` : `HTTP ${res.status}`,
+      },
     };
   }
 

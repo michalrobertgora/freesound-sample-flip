@@ -10,7 +10,7 @@
  * and default-equivalent states produce identical URLs.
  */
 
-import { DEFAULT_FILTERS, type FilterParams } from "./filters";
+import { DEFAULT_FILTERS, type FilterParams, type GeoPoint } from "./filters";
 import { currentIsoWeek, isValidIsoWeek } from "./isoWeek";
 
 export interface AppState {
@@ -48,6 +48,19 @@ function parseList(v: string | null): string[] {
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
+function parseDate(v: string | null): string | null {
+  return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+}
+
+/** "lat,lon,radiusKm" → GeoPoint, or null when malformed/out of range. */
+function parseGeo(v: string | null): GeoPoint | null {
+  if (!v) return null;
+  const [lat, lon, radiusKm] = v.split(",").map(Number);
+  if (![lat, lon, radiusKm].every(Number.isFinite)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180 || radiusKm <= 0) return null;
+  return { lat, lon, radiusKm };
+}
+
 export function parseState(search: string): AppState {
   const q = new URLSearchParams(search);
   const d = defaultState();
@@ -68,6 +81,17 @@ export function parseState(search: string): AppState {
       durationMax: q.has("dmax") ? dmax : d.filters.durationMax,
       types: parseList(q.get("type")),
       license: q.get("lic") ?? "",
+      tonality: q.get("ton") ?? "",
+      loopable: q.get("loop") === "1",
+      singleEvent: q.get("single") === "1",
+      brightnessMin: parseNum(q.get("bri")),
+      warmthMin: parseNum(q.get("warm")),
+      hardnessMin: parseNum(q.get("hard")),
+      boominessMin: parseNum(q.get("boom")),
+      ratingMin: parseNum(q.get("rating")),
+      createdFrom: parseDate(q.get("cfrom")),
+      createdTo: parseDate(q.get("cto")),
+      geo: parseGeo(q.get("geo")),
     },
     ids: parseList(q.get("ids"))
       .map(Number)
@@ -94,6 +118,18 @@ export function serializeState(s: AppState): string {
     q.set("dmax", s.filters.durationMax === null ? "" : String(s.filters.durationMax));
   if (s.filters.types.length) q.set("type", s.filters.types.join(","));
   if (s.filters.license) q.set("lic", s.filters.license);
+  const f = s.filters;
+  if (f.tonality) q.set("ton", f.tonality);
+  if (f.loopable) q.set("loop", "1");
+  if (f.singleEvent) q.set("single", "1");
+  if (f.brightnessMin !== null) q.set("bri", String(f.brightnessMin));
+  if (f.warmthMin !== null) q.set("warm", String(f.warmthMin));
+  if (f.hardnessMin !== null) q.set("hard", String(f.hardnessMin));
+  if (f.boominessMin !== null) q.set("boom", String(f.boominessMin));
+  if (f.ratingMin !== null) q.set("rating", String(f.ratingMin));
+  if (f.createdFrom) q.set("cfrom", f.createdFrom);
+  if (f.createdTo) q.set("cto", f.createdTo);
+  if (f.geo) q.set("geo", `${f.geo.lat},${f.geo.lon},${f.geo.radiusKm}`);
   if (s.ids.length) q.set("ids", s.ids.join(","));
 
   return q.toString();

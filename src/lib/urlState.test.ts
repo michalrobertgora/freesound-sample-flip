@@ -1,6 +1,32 @@
 import { describe, expect, it } from "vitest";
 import { serializeState as ser } from "./urlState";
 
+describe("advanced params round-trip (ticket 06)", () => {
+  it("round-trips every advanced filter through the URL", () => {
+    const qs =
+      "?w=2026-W29&ton=C+minor&loop=1&single=1&bri=55&warm=60&hard=20&boom=30" +
+      "&rating=4&cfrom=2020-01-01&cto=2024-06-30&geo=52.2297,21.0122,25";
+    const s = parseState(qs);
+    expect(s.filters.tonality).toBe("C minor");
+    expect(s.filters.loopable).toBe(true);
+    expect(s.filters.singleEvent).toBe(true);
+    expect(s.filters.brightnessMin).toBe(55);
+    expect(s.filters.geo).toEqual({ lat: 52.2297, lon: 21.0122, radiusKm: 25 });
+    expect(parseState(`?${ser(s)}`)).toEqual(s);
+  });
+
+  it("drops malformed geo and dates instead of propagating garbage", () => {
+    const s = parseState("?w=2026-W29&geo=999,0,10&cfrom=someday&cto=2024-13-99x");
+    expect(s.filters.geo).toBeNull();
+    expect(s.filters.createdFrom).toBeNull();
+    expect(s.filters.createdTo).toBeNull();
+  });
+
+  it("omits advanced defaults from serialized URLs", () => {
+    expect(ser(parseState("?w=2026-W29"))).toBe("w=2026-W29");
+  });
+});
+
 describe("salt normalization in URLs", () => {
   it("omits whitespace-only salt and trims stored salt", () => {
     const base = { ...parseState("?w=2026-W29") };

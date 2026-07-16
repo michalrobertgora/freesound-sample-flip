@@ -144,6 +144,53 @@ fieldset.types legend {
   white-space: nowrap;
 }
 
+details.advanced {
+  margin: 0.75rem 0;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+}
+
+details.advanced summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.date-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.date-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.geo-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: end;
+  margin-top: 0.4rem;
+}
+
+.inline-num {
+  display: inline-flex;
+  flex-direction: column;
+  width: 5.5rem;
+}
+
+.inline-num input {
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  font: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+
 .lock-banner {
   border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
   border-radius: 8px;
