@@ -20,6 +20,8 @@ export interface TransportResponse {
 export type FreesoundError =
   | { kind: "invalid-key" }
   | { kind: "rate-limited"; detail: string }
+  | { kind: "zero-results" }
+  | { kind: "partial-fetch"; message: string }
   | { kind: "unexpected"; message: string };
 
 export type CountResult =

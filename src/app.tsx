@@ -6,6 +6,7 @@ import {
   makeCachedCountFetcher,
   type FreesoundError,
 } from "./lib/freesound";
+import { resolveSeededSet, type FreesoundSound } from "./lib/resolveSet";
 
 const KEY_STORAGE = "freesound-api-key";
 
@@ -34,6 +35,27 @@ function saveApiKey(value: string): void {
 }
 
 const fetchCountCached = makeCachedCountFetcher((url) => fetch(url));
+
+type SetState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ok"; sounds: FreesoundSound[] }
+  | { status: "error"; error: FreesoundError };
+
+const setState = signal<SetState>({ status: "idle" });
+let generation = 0;
+
+async function generateSet(): Promise<void> {
+  const token = apiKey.value;
+  if (!token) return;
+  const id = ++generation;
+  setState.value = { status: "loading" };
+  const result = await resolveSeededSet((url) => fetch(url), token, appState.value);
+  if (id !== generation) return; // a newer generate superseded this one
+  setState.value = result.ok
+    ? { status: "ok", sounds: result.sounds }
+    : { status: "error", error: result.error };
+}
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let requestId = 0;
@@ -101,6 +123,21 @@ function errorMessage(error: FreesoundError) {
           again.
         </p>
       );
+    case "zero-results":
+      return (
+        <p class="status error">
+          No sounds match these filters. Try loosening them — a wider duration
+          range, fewer tags, or a broader query.
+        </p>
+      );
+    case "partial-fetch":
+      return (
+        <p class="status error">
+          Freesound returned an incomplete set ({error.message}) — nothing was
+          rendered, because a partial set would differ from your friend's. Try
+          again, or tweak a filter.
+        </p>
+      );
     case "unexpected":
       return (
         <p class="status error">
@@ -137,7 +174,49 @@ function CountSection() {
           <button onClick={() => retryTick.value++}>Try again</button>
         </>
       )}
+      <p>
+        <button
+          class="generate"
+          disabled={apiKey.value === "" || setState.value.status === "loading"}
+          onClick={generateSet}
+        >
+          Generate set
+        </button>
+      </p>
     </section>
+  );
+}
+
+function ResultsPane() {
+  const s = setState.value;
+  return (
+    <main class="results">
+      <h2>This week's set</h2>
+      {s.status === "idle" && (
+        <p class="muted">Enter your key, tune the filters, hit Generate.</p>
+      )}
+      {s.status === "loading" && <p class="status muted">Resolving the set…</p>}
+      {s.status === "error" && (
+        <>
+          {errorMessage(s.error)}
+          <button onClick={generateSet}>Try again</button>
+        </>
+      )}
+      {s.status === "ok" && (
+        <ol class="sound-list">
+          {s.sounds.map((sound) => (
+            <li key={sound.id}>
+              <a href={sound.url} target="_blank" rel="noreferrer">
+                {sound.name}
+              </a>{" "}
+              <span class="muted small">
+                #{sound.id} by {sound.username}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </main>
   );
 }
 
@@ -158,10 +237,7 @@ export function App() {
           <pre>{seed}</pre>
         </details>
       </aside>
-      <main class="results">
-        <h2>This week's set</h2>
-        <p class="muted">Results will render here (step 3).</p>
-      </main>
+      <ResultsPane />
     </div>
   );
 }
