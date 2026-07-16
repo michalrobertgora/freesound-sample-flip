@@ -659,8 +659,9 @@ function errorMessage(error: FreesoundError) {
     case "unexpected":
       return (
         <p class="status error">
-          Couldn't reach Freesound: {error.message}. Check your connection and
-          try again.
+          Something went wrong talking to Freesound: {error.message}. Try
+          again — if it keeps happening, check your connection or simplify the
+          filters.
         </p>
       );
   }
