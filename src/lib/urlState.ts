@@ -26,6 +26,14 @@ export const MIN_SAMPLES = 3;
 export const MAX_SAMPLES = 6;
 export const DEFAULT_SAMPLE_COUNT = 4;
 
+/**
+ * Locked sets resolve in ONE request, so ids beyond the API's max page
+ * size (150) can never be fetched — without this cap they would render
+ * falsely as "removed from Freesound". The app itself emits 3–6 ids;
+ * only hand-crafted URLs ever hit this.
+ */
+export const MAX_LOCKED_IDS = 150;
+
 export function defaultState(): AppState {
   return {
     week: currentIsoWeek(),
@@ -95,7 +103,8 @@ export function parseState(search: string): AppState {
     },
     ids: parseList(q.get("ids"))
       .map(Number)
-      .filter((x) => Number.isInteger(x) && x > 0),
+      .filter((x) => Number.isInteger(x) && x > 0)
+      .slice(0, MAX_LOCKED_IDS),
   };
 }
 

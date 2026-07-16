@@ -27,6 +27,16 @@ describe("advanced params round-trip (ticket 06)", () => {
   });
 });
 
+describe("ids cap", () => {
+  it("caps hand-crafted ids lists at the single-request page size", () => {
+    const many = Array.from({ length: 200 }, (_, i) => i + 1).join(",");
+    const s = parseState(`?w=2026-W29&ids=${many}`);
+    expect(s.ids).toHaveLength(150);
+    expect(s.ids[0]).toBe(1);
+    expect(s.ids[149]).toBe(150);
+  });
+});
+
 describe("salt normalization in URLs", () => {
   it("omits whitespace-only salt and trims stored salt", () => {
     const base = { ...parseState("?w=2026-W29") };

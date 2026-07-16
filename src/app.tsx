@@ -9,6 +9,7 @@ import {
 } from "./lib/urlState";
 import {
   canonicalFilterString,
+  DEFAULT_FILTERS,
   formatNum,
   normalizeText,
   seedString,
@@ -196,18 +197,27 @@ effect(() => {
  * values can never introduce float-noise seed drift. */
 const DUR_SLIDER = { min: 0.1, max: 600, steps: 600 };
 
-function posToDur(pos: number): number {
-  const v =
-    DUR_SLIDER.min *
-    Math.exp((pos / DUR_SLIDER.steps) * Math.log(DUR_SLIDER.max / DUR_SLIDER.min));
-  return Math.round(v * 10) / 10;
-}
-
 function durToPos(d: number): number {
   return Math.round(
     (Math.log(d / DUR_SLIDER.min) / Math.log(DUR_SLIDER.max / DUR_SLIDER.min)) *
       DUR_SLIDER.steps,
   );
+}
+
+// The default bounds (0.5 / 30) must be exactly restorable, but 30 is not
+// on the 0.1-quantized log grid (its nearest position reads back 29.8).
+// Snap those two positions to the defaults so a touched slider can return
+// to a pristine URL.
+const DEFAULT_MIN_POS = durToPos(DEFAULT_FILTERS.durationMin as number);
+const DEFAULT_MAX_POS = durToPos(DEFAULT_FILTERS.durationMax as number);
+
+function posToDur(pos: number): number {
+  if (pos === DEFAULT_MIN_POS) return DEFAULT_FILTERS.durationMin as number;
+  if (pos === DEFAULT_MAX_POS) return DEFAULT_FILTERS.durationMax as number;
+  const v =
+    DUR_SLIDER.min *
+    Math.exp((pos / DUR_SLIDER.steps) * Math.log(DUR_SLIDER.max / DUR_SLIDER.min));
+  return Math.round(v * 10) / 10;
 }
 
 const FILE_TYPES = ["wav", "aiff", "flac", "mp3", "ogg", "m4a"];
