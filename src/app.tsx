@@ -4,6 +4,7 @@ import {
   MIN_SAMPLES,
   parseState,
   pushStateToUrl,
+  serializeState,
   type AppState,
 } from "./lib/urlState";
 import {
@@ -19,7 +20,12 @@ import {
   makeCachedCountFetcher,
   type FreesoundError,
 } from "./lib/freesound";
-import { resolveSeededSet, type FreesoundSound } from "./lib/resolveSet";
+import {
+  resolveLockedSet,
+  resolveSeededSet,
+  type FreesoundSound,
+  type LockedSlot,
+} from "./lib/resolveSet";
 import {
   formatDuration,
   formatSampleRate,
@@ -48,13 +54,23 @@ window.addEventListener("popstate", () => {
 
 function saveApiKey(value: string): void {
   const v = value.trim();
+  const hadKey = apiKey.value !== "";
   apiKey.value = v;
   if (v) localStorage.setItem(KEY_STORAGE, v);
   else localStorage.removeItem(KEY_STORAGE);
+  // A locked link opened without a key resolves as soon as one arrives.
+  if (!hadKey && v && appState.value.ids.length > 0) void generateSet();
 }
 
 function updateState(patch: Partial<AppState>): void {
   const next = { ...appState.value, ...patch };
+  // Editing any control while an ID lock is active clears the lock (the
+  // banner says so) — controls and set must never silently diverge.
+  if (appState.value.ids.length > 0 && !("ids" in patch)) {
+    next.ids = [];
+    stopPlayback();
+    setState.value = { status: "idle" };
+  }
   appState.value = next;
   pushStateToUrl(next);
 }
@@ -63,27 +79,40 @@ function updateFilters(patch: Partial<FilterParams>): void {
   updateState({ filters: { ...appState.value.filters, ...patch } });
 }
 
+function unlockSet(): void {
+  stopPlayback();
+  setState.value = { status: "idle" };
+  updateState({ ids: [] });
+}
+
 const fetchCountCached = makeCachedCountFetcher((url) => fetch(url));
 
 type SetState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "ok"; sounds: FreesoundSound[] }
+  | { status: "ok"; slots: LockedSlot[] }
   | { status: "error"; error: FreesoundError };
 
 const setState = signal<SetState>({ status: "idle" });
 let generation = 0;
 
+/** Seeded draw normally; a URL with ids is a locked set and resolves those. */
 async function generateSet(): Promise<void> {
   const token = apiKey.value;
   if (!token) return;
   const id = ++generation;
   stopPlayback();
   setState.value = { status: "loading" };
-  const result = await resolveSeededSet((url) => fetch(url), token, appState.value);
+  const s = appState.value;
+  const result =
+    s.ids.length > 0
+      ? await resolveLockedSet((url) => fetch(url), token, s.ids)
+      : await resolveSeededSet((url) => fetch(url), token, s).then((r) =>
+          r.ok ? { ok: true as const, slots: r.sounds as LockedSlot[] } : r,
+        );
   if (id !== generation) return; // a newer generate superseded this one
   setState.value = result.ok
-    ? { status: "ok", sounds: result.sounds }
+    ? { status: "ok", slots: result.slots }
     : { status: "error", error: result.error };
 }
 
@@ -104,6 +133,21 @@ audio.addEventListener("error", () => {
 function stopPlayback(): void {
   audio.pause();
   playingId.value = null;
+}
+
+// A locked link (ids in the URL) resolves immediately on load.
+if (appState.value.ids.length > 0 && apiKey.value) void generateSet();
+
+const copied = signal(false);
+
+async function copySetLink(slots: LockedSlot[]): Promise<void> {
+  const qs = serializeState({ ...appState.value, ids: slots.map((s) => s.id) });
+  const url = `${location.origin}${location.pathname}?${qs}`;
+  await navigator.clipboard.writeText(url);
+  copied.value = true;
+  setTimeout(() => {
+    copied.value = false;
+  }, 2000);
 }
 
 function togglePlay(sound: FreesoundSound): void {
@@ -176,6 +220,21 @@ const LICENSES: Array<[value: string, label: string]> = [
   ["Attribution", "CC-BY"],
   ["Attribution NonCommercial", "CC-BY-NC"],
 ];
+
+function LockBanner() {
+  const ids = appState.value.ids;
+  if (ids.length === 0) return null;
+  return (
+    <section class="lock-banner">
+      <p class="status">
+        🔒 <strong>Locked set</strong> — this link pins {ids.length} exact
+        sounds; the seeded draw is bypassed. Changing any control (or
+        unlocking) clears the lock.
+      </p>
+      <button onClick={unlockSet}>Unlock &amp; edit</button>
+    </section>
+  );
+}
 
 function WeekSection() {
   const s = appState.value;
@@ -484,6 +543,20 @@ function SoundCard({ sound }: { sound: FreesoundSound }) {
   );
 }
 
+function MissingCard({ id }: { id: number }) {
+  return (
+    <article class="card missing">
+      <div class="card-body">
+        <h3 class="card-title">Removed from Freesound</h3>
+        <p class="muted small">
+          Sound #{id} was deleted after this link was made. The rest of the
+          set still stands.
+        </p>
+      </div>
+    </article>
+  );
+}
+
 function SkeletonCard() {
   return (
     <article class="card skeleton" aria-hidden="true">
@@ -520,11 +593,25 @@ function ResultsPane() {
         </>
       )}
       {s.status === "ok" && (
-        <div class="sound-grid">
-          {s.sounds.map((sound) => (
-            <SoundCard key={sound.id} sound={sound} />
-          ))}
-        </div>
+        <>
+          <p class="actions">
+            <button onClick={() => void copySetLink(s.slots)}>
+              {copied.value ? "Copied!" : "Copy set link"}
+            </button>
+            <span class="muted small">
+              pins these exact sounds — your friend opens it, no reroll
+            </span>
+          </p>
+          <div class="sound-grid">
+            {s.slots.map((slot) =>
+              "missing" in slot ? (
+                <MissingCard key={slot.id} id={slot.id} />
+              ) : (
+                <SoundCard key={slot.id} sound={slot} />
+              ),
+            )}
+          </div>
+        </>
       )}
     </main>
   );
@@ -540,6 +627,7 @@ export function App() {
         <h1>Cotygodniowy Flip</h1>
         <p class="muted">Weekly sample challenge — deterministic Freesound picks.</p>
         <ApiKeySection />
+        <LockBanner />
         <WeekSection />
         <FiltersSection />
         <CountSection />

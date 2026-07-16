@@ -144,6 +144,19 @@ fieldset.types legend {
   white-space: nowrap;
 }
 
+.lock-banner {
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.card.missing {
+  border-style: dashed;
+  opacity: 0.75;
+  min-height: 120px;
+}
+
 /* --- Sound cards --- */
 
 .sound-grid {

@@ -61,6 +61,18 @@ export type ResolveResult =
   | { ok: true; sounds: FreesoundSound[] }
   | { ok: false; error: FreesoundError };
 
+/** A locked-set slot whose sound has been removed from Freesound. */
+export interface MissingSound {
+  id: number;
+  missing: true;
+}
+
+export type LockedSlot = FreesoundSound | MissingSound;
+
+export type LockedResult =
+  | { ok: true; slots: LockedSlot[] }
+  | { ok: false; error: FreesoundError };
+
 function buildPageUrl(
   token: string,
   query: string,
@@ -92,6 +104,37 @@ async function fetchPage(
     };
   }
   return { ok: true, results };
+}
+
+/**
+ * Resolve an ID-locked set: one search request filtered by ID — no count,
+ * no seed, no draw. The API returns its own order, so slots are reordered
+ * client-side to the requested (draw) order; a removed sound becomes an
+ * explicit placeholder slot rather than silently shrinking the set.
+ */
+export async function resolveLockedSet(
+  transport: Transport,
+  token: string,
+  ids: number[],
+): Promise<LockedResult> {
+  const q = new URLSearchParams();
+  q.set("page_size", String(PAGE_SIZE));
+  q.set("fields", SOUND_FIELDS);
+  q.set("filter", `id:(${ids.join(" OR ")})`);
+  q.set("token", token);
+
+  const fetched = await fetchPage(transport, `${API_BASE}/search/?${q.toString()}`);
+  if (!fetched.ok) return fetched;
+
+  const byId = new Map<number, FreesoundSound>();
+  for (const raw of fetched.results) {
+    const sound = raw as FreesoundSound;
+    byId.set(sound.id, sound);
+  }
+  return {
+    ok: true,
+    slots: ids.map((id) => byId.get(id) ?? { id, missing: true as const }),
+  };
 }
 
 /** Resolve the week's set deterministically from (week, salt, count, filters). */

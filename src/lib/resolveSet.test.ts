@@ -6,6 +6,7 @@ import {
   INDEX_CAP,
   PAGE_SIZE,
   SOUND_FIELDS,
+  resolveLockedSet,
   resolveSeededSet,
 } from "./resolveSet";
 import { parseState, type AppState } from "./urlState";
@@ -159,3 +160,63 @@ describe("resolveSeededSet edge cases and errors", () => {
     expect(r.error.kind).toBe("partial-fetch");
   });
 });
+
+/** Fake for locked mode: knows these sounds, returns them in id order. */
+function makeLockedApi(existingIds: number[]) {
+  const calls: URL[] = [];
+  const transport: Transport = async (url) => {
+    const u = new URL(url);
+    calls.push(u);
+    if (u.searchParams.get("token") === "BAD") {
+      return { status: 401, json: async () => ({}) };
+    }
+    const m = /^id:\((.+)\)$/.exec(u.searchParams.get("filter") ?? "");
+    const asked = m ? m[1].split(" OR ").map(Number) : [];
+    const found = asked
+      .filter((id) => existingIds.includes(id))
+      .sort((a, b) => a - b)
+      .map((id) => ({ id, name: `sound-${id}`, username: "u" }));
+    return { status: 200, json: async () => ({ count: found.length, results: found }) };
+  };
+  return { transport, calls };
+}
+
+describe("resolveLockedSet", () => {
+  it("makes exactly one ID-filtered request: no count, no seed, no sort", async () => {
+    const api = makeLockedApi([301, 302, 303]);
+    const r = await resolveLockedSet(api.transport, "TOK", [302, 301, 303]);
+    expect(r.ok).toBe(true);
+    expect(api.calls).toHaveLength(1);
+    const u = api.calls[0];
+    expect(u.searchParams.get("filter")).toBe("id:(302 OR 301 OR 303)");
+    expect(u.searchParams.get("fields")).toBe(SOUND_FIELDS);
+    expect(u.searchParams.get("token")).toBe("TOK");
+    expect(u.searchParams.has("sort")).toBe(false);
+    expect(u.searchParams.has("query")).toBe(false);
+  });
+
+  it("reorders the response to the requested (draw) order", async () => {
+    const api = makeLockedApi([301, 302, 303]);
+    const r = await resolveLockedSet(api.transport, "TOK", [303, 301, 302]);
+    if (!r.ok) throw new Error("expected ok");
+    expect(r.slots.map((s) => s.id)).toEqual([303, 301, 302]);
+  });
+
+  it("renders a missing id as an explicit placeholder while the rest load", async () => {
+    const api = makeLockedApi([301, 303]);
+    const r = await resolveLockedSet(api.transport, "TOK", [303, 302, 301]);
+    if (!r.ok) throw new Error("expected ok");
+    expect(r.slots.map((s) => ("missing" in s ? `gone-${s.id}` : s.id))).toEqual([
+      303,
+      "gone-302",
+      301,
+    ]);
+  });
+
+  it("propagates auth failure", async () => {
+    const api = makeLockedApi([301]);
+    const r = await resolveLockedSet(api.transport, "BAD", [301]);
+    expect(r).toEqual({ ok: false, error: { kind: "invalid-key" } });
+  });
+});
+
