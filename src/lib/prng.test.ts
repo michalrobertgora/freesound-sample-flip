@@ -26,12 +26,29 @@ describe("seededRng", () => {
   });
 
   it("pins exact values so any algorithm change is caught (cross-machine contract)", () => {
+    // Hard-coded golden values: if these ever change, xmur3/mulberry32
+    // changed and every user must update simultaneously or sets diverge.
     const rng = seededRng("2026-W29||4||duration:[0.5 TO 30]");
-    // Golden values: if these change, both users must update simultaneously.
-    const golden = Array.from({ length: 4 }, rng);
-    expect(golden).toEqual(golden.map((v) => v)); // self-consistency
-    const rng2 = seededRng("2026-W29||4||duration:[0.5 TO 30]");
-    expect(Array.from({ length: 4 }, rng2)).toEqual(golden);
+    expect(Array.from({ length: 5 }, rng)).toEqual([
+      0.2669292588252574, 0.9977047969587147, 0.8255365998484194,
+      0.579323148354888, 0.8155084026511759,
+    ]);
+  });
+});
+
+describe("drawDistinctIndices golden values (cross-machine contract)", () => {
+  // Pins the whole seed→indices pipeline, rejection sampling included.
+  it("draws known indices for known seeds", () => {
+    expect(
+      drawDistinctIndices(seededRng("2026-W29||4||duration:[0.5 TO 30]"), 4, 8400),
+    ).toEqual([2242, 8380, 6934, 4866]);
+    expect(
+      drawDistinctIndices(
+        seededRng("2026-W29|reroll|5|ambient pad|duration:[0.5 TO 30] type:(aiff OR wav)"),
+        5,
+        1200,
+      ),
+    ).toEqual([1177, 566, 727, 341, 408]);
   });
 });
 
