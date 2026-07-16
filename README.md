@@ -80,12 +80,9 @@ deliberately, with both participants updating at the same time.
 
 - **Any static host / nginx**: copy `dist/` wherever the server can see it.
   No headers, rewrites, or server logic needed.
-- **GitHub Pages (current setup)**: Pages serves the `gh-pages` branch; run
-  `./deploy.ps1` to build and republish. The repo also carries a
-  `.github/workflows/deploy.yml` that auto-deploys on push to `master` —
-  it's currently blocked by a GitHub Actions billing lock on the account;
-  once that's resolved, flip Pages back to "GitHub Actions" mode in the repo
-  settings and retire the script.
+- **GitHub Pages (current setup)**: every push to `master` runs
+  `.github/workflows/deploy.yml` (tests → build → deploy). Nothing manual —
+  merge and it ships.
 
 There is no backend and no proxy — the app talks to
 `https://freesound.org/apiv2/` directly (CORS is open for token auth).
