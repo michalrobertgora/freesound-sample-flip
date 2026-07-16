@@ -85,6 +85,65 @@ button:disabled {
   cursor: default;
 }
 
+/* --- Controls --- */
+
+.field {
+  display: block;
+  margin: 0.6rem 0;
+}
+
+.field > span {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.field input:not([type="checkbox"]):not([type="range"]),
+.field select {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+
+.field input[type="range"] {
+  width: 100%;
+  display: block;
+}
+
+.week-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.week-label {
+  min-width: 6.5ch;
+  text-align: center;
+}
+
+fieldset.types {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem 0.6rem;
+}
+
+fieldset.types legend {
+  font-size: 0.85rem;
+  padding: 0 0.25rem;
+}
+
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.75rem;
+  white-space: nowrap;
+}
+
 /* --- Sound cards --- */
 
 .sound-grid {

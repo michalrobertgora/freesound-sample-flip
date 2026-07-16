@@ -81,7 +81,10 @@ export function serializeState(s: AppState): string {
 
   // Week is always explicit: a copied link must pin the week, not float with "now".
   q.set("w", s.week);
-  if (s.salt) q.set("salt", s.salt);
+  // Controls store salt raw while typing; the URL carries it trimmed, so
+  // whitespace-only salt and empty salt serialize identically.
+  const salt = s.salt.trim();
+  if (salt) q.set("salt", salt);
   if (s.sampleCount !== d.sampleCount) q.set("n", String(s.sampleCount));
   if (s.filters.query) q.set("q", s.filters.query);
   if (s.filters.tags.length) q.set("tags", s.filters.tags.join(","));

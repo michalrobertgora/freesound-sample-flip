@@ -1,4 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { serializeState as ser } from "./urlState";
+
+describe("salt normalization in URLs", () => {
+  it("omits whitespace-only salt and trims stored salt", () => {
+    const base = { ...parseState("?w=2026-W29") };
+    expect(ser({ ...base, salt: "   " })).toBe(ser({ ...base, salt: "" }));
+    expect(ser({ ...base, salt: " take2 " })).toContain("salt=take2");
+  });
+});
 import { defaultState, parseState, serializeState } from "./urlState";
 
 describe("parseState / serializeState", () => {
