@@ -8,7 +8,12 @@ import {
   type FilterParams,
 } from "./filters";
 
-const base: FilterParams = { ...DEFAULT_FILTERS, tags: [], types: [] };
+const base: FilterParams = {
+  ...DEFAULT_FILTERS,
+  tags: [],
+  types: [],
+  categories: [],
+};
 
 describe("formatNum", () => {
   it("quantizes to 0.1 and strips float noise", () => {
@@ -121,15 +126,62 @@ describe("advanced filters (ticket 06)", () => {
   });
 });
 
-describe("default file types (ticket 08)", () => {
-  it("pins the new pristine-default string — a deliberate seed break", () => {
-    // Pre-ticket pristine states produced "duration:[0.5 TO 30]"; wav+mp3
-    // are now checked by default, so pristine seeds change. Recorded in
-    // ticket 08's comments; explicit type selections are unaffected.
+describe("default file types (ticket 08) + categories (ticket 10)", () => {
+  it("pins the pristine-default string — deliberate seed breaks", () => {
+    // Pre-ticket-08 pristine states produced "duration:[0.5 TO 30]".
+    // Ticket 08 added type:(mp3 OR wav); ticket 10 added the 4-of-5
+    // category default. Both breaks recorded in the ticket comments.
     expect(canonicalFilterString({ ...DEFAULT_FILTERS })).toBe(
-      "duration:[0.5 TO 30] type:(mp3 OR wav)",
+      'category:("Instrument samples" OR "Music" OR "Sound effects" OR "Soundscapes") ' +
+        "duration:[0.5 TO 30] type:(mp3 OR wav)",
     );
     expect(DEFAULT_FILTERS.types).toEqual(["wav", "mp3"]);
+  });
+});
+
+describe("category filter (ticket 10)", () => {
+  it("emits sorted, always-quoted values in the fixed key order", () => {
+    const s = canonicalFilterString({
+      ...base,
+      brightnessMin: 55,
+      categories: ["Sound effects", "Music"],
+      createdFrom: "2020-01-01",
+    });
+    expect(s).toBe(
+      'brightness:[55 TO *] category:("Music" OR "Sound effects") ' +
+        "created:[2020-01-01T00:00:00Z TO *] duration:[0.5 TO 30]",
+    );
+  });
+
+  it("quotes single values too", () => {
+    expect(canonicalFilterString({ ...base, categories: ["Speech"] })).toBe(
+      'category:"Speech" duration:[0.5 TO 30]',
+    );
+  });
+
+  it("emits nothing for none-selected and all-five-selected alike", () => {
+    // Live-verified 2026-07-17: all five ORed = 728,851 vs 729,103
+    // unfiltered (252 uncategorized sounds) — "everything checked" means
+    // "don't care", so it emits no clause and keeps those sounds in.
+    expect(canonicalFilterString(base)).toBe("duration:[0.5 TO 30]");
+    expect(
+      canonicalFilterString({
+        ...base,
+        categories: [
+          "Instrument samples",
+          "Music",
+          "Sound effects",
+          "Soundscapes",
+          "Speech",
+        ],
+      }),
+    ).toBe("duration:[0.5 TO 30]");
+  });
+
+  it("dedupes while keeping exact case (values are canonical by construction)", () => {
+    expect(
+      canonicalFilterString({ ...base, categories: ["Music", "Music"] }),
+    ).toBe('category:"Music" duration:[0.5 TO 30]');
   });
 });
 

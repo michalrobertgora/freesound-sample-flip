@@ -16,10 +16,28 @@ export interface GeoPoint {
   radiusKm: number;
 }
 
+/**
+ * Broad Sound Taxonomy top-level categories. Display names are the filter
+ * values (live-verified 2026-07-17; codes like `fx-a` are NOT filterable).
+ */
+export const ALL_CATEGORIES = [
+  "Instrument samples",
+  "Music",
+  "Sound effects",
+  "Soundscapes",
+  "Speech",
+] as const;
+
 export interface FilterParams {
   /** Free-text query (Freesound `query=` param, not part of `filter=`). */
   query: string;
   tags: string[];
+  /**
+   * BST categories to include; none-selected and all-selected both mean
+   * "no category clause" (all five ORed still excludes ~250 uncategorized
+   * sounds — "everything checked" must not).
+   */
+  categories: string[];
   /** Duration range in seconds; null = unbounded on that side. */
   durationMin: number | null;
   durationMax: number | null;
@@ -56,6 +74,9 @@ export interface FilterParams {
 export const DEFAULT_FILTERS: FilterParams = {
   query: "",
   tags: [],
+  // Everything except Speech (ticket 10) — a pristine-seed break like the
+  // wav+mp3 default, recorded in the ticket comments.
+  categories: ["Sound effects", "Music", "Instrument samples", "Soundscapes"],
   durationMin: 0.5,
   durationMax: 30,
   // Non-empty default (ticket 08): pristine states now filter to wav+mp3,
@@ -99,9 +120,9 @@ function minRange(field: string, min: number | null, parts: string[]): void {
 /**
  * Build the canonical Freesound `filter=` string.
  * Key order is fixed (alphabetical by emitted key): avg_rating, boominess,
- * brightness, created, duration, geofilt, hardness, license, loopable,
- * single_event, tag, tonality, type, warmth. Parts are only emitted when
- * set, so states that predate a key are byte-identical forever.
+ * brightness, category, created, duration, geofilt, hardness, license,
+ * loopable, single_event, tag, tonality, type, warmth. Parts are only
+ * emitted when set, so states that predate a key are byte-identical forever.
  */
 export function canonicalFilterString(p: FilterParams): string {
   const parts: string[] = [];
@@ -109,6 +130,18 @@ export function canonicalFilterString(p: FilterParams): string {
   if (p.ratingMin !== null) parts.push(`avg_rating:[${formatNum(p.ratingMin)} TO *]`);
   minRange("boominess", p.boominessMin, parts);
   minRange("brightness", p.brightnessMin, parts);
+
+  // Values always double-quoted (three of five contain spaces; quoting the
+  // rest keeps the form uniform). Exact case, like tonality — the values
+  // come from fixed checkboxes, canonical by construction.
+  const cats = [...new Set(p.categories)].sort();
+  if (cats.length > 0 && cats.length < ALL_CATEGORIES.length) {
+    parts.push(
+      cats.length === 1
+        ? `category:"${cats[0]}"`
+        : `category:(${cats.map((c) => `"${c}"`).join(" OR ")})`,
+    );
+  }
 
   if (p.createdFrom !== null || p.createdTo !== null) {
     const lo = p.createdFrom ? `${p.createdFrom}T00:00:00Z` : "*";

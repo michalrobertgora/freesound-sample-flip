@@ -1,4 +1,4 @@
-import { DEFAULT_FILTERS, formatNum } from "../lib/filters";
+import { ALL_CATEGORIES, DEFAULT_FILTERS, formatNum } from "../lib/filters";
 import { store } from "../store";
 
 /** Log-scale duration slider: position 0..steps ↔ seconds, quantized to
@@ -50,6 +50,13 @@ function toggleType(t: string): void {
   if (cur.has(t)) cur.delete(t);
   else cur.add(t);
   store.updateFilters({ types: [...cur] });
+}
+
+function toggleCategory(c: string): void {
+  const cur = store.state.value.filters.categories;
+  store.updateFilters({
+    categories: cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c],
+  });
 }
 
 function toggleTag(t: string): void {
@@ -124,6 +131,19 @@ export function FiltersSection() {
           }
         />
       </label>
+      <fieldset class="field types">
+        <legend>Categories</legend>
+        {ALL_CATEGORIES.map((c) => (
+          <label class="inline" key={c}>
+            <input
+              type="checkbox"
+              checked={f.categories.includes(c)}
+              onChange={() => toggleCategory(c)}
+            />{" "}
+            {c}
+          </label>
+        ))}
+      </fieldset>
       <TagChips />
       <div class="field">
         <span>

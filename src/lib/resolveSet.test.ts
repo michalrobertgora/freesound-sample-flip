@@ -62,7 +62,8 @@ describe("resolveSeededSet request construction", () => {
       expect(u.searchParams.get("fields")).toBe(SOUND_FIELDS);
       expect(u.searchParams.get("token")).toBe("TOK");
       expect(u.searchParams.get("filter")).toBe(
-        "duration:[0.5 TO 30] type:(mp3 OR wav)",
+        'category:("Instrument samples" OR "Music" OR "Sound effects" OR "Soundscapes") ' +
+          "duration:[0.5 TO 30] type:(mp3 OR wav)",
       );
     }
   });

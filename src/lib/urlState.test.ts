@@ -51,6 +51,42 @@ describe("default file types (ticket 08)", () => {
   });
 });
 
+describe("category param (ticket 10)", () => {
+  it("defaults to all-but-Speech and omits the default from pristine URLs", () => {
+    const s = parseState("?w=2026-W29");
+    expect(s.filters.categories).toEqual([
+      "Sound effects",
+      "Music",
+      "Instrument samples",
+      "Soundscapes",
+    ]);
+    expect(ser(s)).toBe("w=2026-W29");
+  });
+
+  it("round-trips explicit selections via slugs", () => {
+    const s = parseState("?w=2026-W29&cat=music,speech");
+    expect(s.filters.categories).toEqual(["Music", "Speech"]);
+    expect(ser(s)).toContain("cat=music%2Cspeech");
+    expect(parseState(`?${ser(s)}`)).toEqual(s);
+  });
+
+  it("keeps an explicit empty marker and serializes all-five distinctly", () => {
+    const none = parseState("?w=2026-W29&cat=");
+    expect(none.filters.categories).toEqual([]);
+    expect(parseState(`?${ser(none)}`)).toEqual(none);
+
+    const all = parseState("?w=2026-W29&cat=fx,music,instruments,soundscapes,speech");
+    expect(all.filters.categories).toHaveLength(5);
+    expect(parseState(`?${ser(all)}`)).toEqual(all);
+  });
+
+  it("drops unknown slugs", () => {
+    expect(parseState("?w=2026-W29&cat=music,banana").filters.categories).toEqual([
+      "Music",
+    ]);
+  });
+});
+
 describe("ids cap", () => {
   it("caps hand-crafted ids lists at the single-request page size", () => {
     const many = Array.from({ length: 200 }, (_, i) => i + 1).join(",");

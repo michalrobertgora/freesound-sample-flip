@@ -39,7 +39,12 @@ export function defaultState(): AppState {
     week: currentIsoWeek(),
     salt: "",
     sampleCount: DEFAULT_SAMPLE_COUNT,
-    filters: { ...DEFAULT_FILTERS, tags: [], types: [...DEFAULT_FILTERS.types] },
+    filters: {
+      ...DEFAULT_FILTERS,
+      tags: [],
+      types: [...DEFAULT_FILTERS.types],
+      categories: [...DEFAULT_FILTERS.categories],
+    },
     ids: [],
   };
 }
@@ -59,6 +64,17 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 /** Order-insensitive equality — the canonical filter string sorts anyway. */
 const sameSet = (a: string[], b: string[]) =>
   a.length === b.length && [...a].sort().join(",") === [...b].sort().join(",");
+
+/** URL slugs for BST category display names (`cat=` param). */
+const CATEGORY_SLUGS: Array<[name: string, slug: string]> = [
+  ["Instrument samples", "instruments"],
+  ["Music", "music"],
+  ["Sound effects", "fx"],
+  ["Soundscapes", "soundscapes"],
+  ["Speech", "speech"],
+];
+const SLUG_TO_NAME = new Map(CATEGORY_SLUGS.map(([n, s]) => [s, n]));
+const NAME_TO_SLUG = new Map(CATEGORY_SLUGS);
 
 function parseDate(v: string | null): string | null {
   return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
@@ -89,6 +105,11 @@ export function parseState(search: string): AppState {
     filters: {
       query: q.get("q") ?? "",
       tags: parseList(q.get("tags")),
+      categories: q.has("cat")
+        ? parseList(q.get("cat"))
+            .map((s) => SLUG_TO_NAME.get(s))
+            .filter((n): n is string => n !== undefined)
+        : [...d.filters.categories],
       durationMin: q.has("dmin") ? dmin : d.filters.durationMin,
       durationMax: q.has("dmax") ? dmax : d.filters.durationMax,
       // Default is non-empty, so "no types" needs an explicit marker:
@@ -127,6 +148,11 @@ export function serializeState(s: AppState): string {
   if (s.sampleCount !== d.sampleCount) q.set("n", String(s.sampleCount));
   if (s.filters.query) q.set("q", s.filters.query);
   if (s.filters.tags.length) q.set("tags", s.filters.tags.join(","));
+  if (!sameSet(s.filters.categories, d.filters.categories))
+    q.set(
+      "cat",
+      s.filters.categories.map((n) => NAME_TO_SLUG.get(n) ?? "").filter(Boolean).join(","),
+    );
   if (s.filters.durationMin !== d.filters.durationMin)
     q.set("dmin", s.filters.durationMin === null ? "" : String(s.filters.durationMin));
   if (s.filters.durationMax !== d.filters.durationMax)

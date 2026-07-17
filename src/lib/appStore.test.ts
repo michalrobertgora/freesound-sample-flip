@@ -124,9 +124,11 @@ describe("createAppStore", () => {
   describe("derived signals", () => {
     it("pins the seed to the golden cross-machine format", () => {
       const store = createAppStore(fakeUrl("?w=2026-W29").adapter);
-      // Ticket 08 seed break: pristine defaults now include type:(mp3 OR wav).
+      // Ticket 08+10 seed breaks: pristine defaults now include
+      // type:(mp3 OR wav) and the 4-of-5 category clause.
       expect(store.seed.value).toBe(
-        "2026-W29||4||duration:[0.5 TO 30] type:(mp3 OR wav)",
+        '2026-W29||4||category:("Instrument samples" OR "Music" OR "Sound effects" OR "Soundscapes") ' +
+          "duration:[0.5 TO 30] type:(mp3 OR wav)",
       );
     });
 
@@ -134,9 +136,13 @@ describe("createAppStore", () => {
       const store = createAppStore(fakeUrl("?w=2026-W29").adapter);
       store.updateFilters({ query: "  Ambient  Pad ", types: ["wav"] });
       expect(store.query.value).toBe("ambient pad");
-      expect(store.canonicalFilter.value).toBe("duration:[0.5 TO 30] type:wav");
+      const catDefault =
+        'category:("Instrument samples" OR "Music" OR "Sound effects" OR "Soundscapes")';
+      expect(store.canonicalFilter.value).toBe(
+        `${catDefault} duration:[0.5 TO 30] type:wav`,
+      );
       expect(store.seed.value).toBe(
-        "2026-W29||4|ambient pad|duration:[0.5 TO 30] type:wav",
+        `2026-W29||4|ambient pad|${catDefault} duration:[0.5 TO 30] type:wav`,
       );
     });
   });
