@@ -527,6 +527,15 @@ details.advanced summary {
   pointer-events: none;
 }
 
+.wave-onset {
+  position: absolute;
+  bottom: 1px;
+  width: 1px;
+  height: 34%;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  pointer-events: none;
+}
+
 .wave-playhead {
   position: absolute;
   top: 0;

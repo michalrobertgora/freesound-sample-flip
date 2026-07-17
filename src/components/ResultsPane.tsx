@@ -6,8 +6,9 @@ import {
   previewUrl,
 } from "../lib/display";
 import type { FreesoundError } from "../lib/freesound";
+import { ensureOnsets, onsetsFor } from "../lib/onsets";
 import { playingId, position, seekTo, toggle } from "../lib/player";
-import { pointerFraction } from "../lib/scrub";
+import { pointerFraction, snapToOnset } from "../lib/scrub";
 import type { FreesoundSound, LockedSlot } from "../lib/resolveSet";
 import { store } from "../store";
 import { errorMessage } from "./errorMessage";
@@ -18,24 +19,38 @@ export type SetState =
   | { status: "ok"; slots: LockedSlot[] }
   | { status: "error"; error: FreesoundError };
 
+/** Snap radius in rendered pixels — converted to seconds per card, so the
+ * feel is constant regardless of sound length. */
+const SNAP_PX = 8;
+
+/** Above this, tick marks become noise (snapping still works). */
+const MAX_ONSET_TICKS = 64;
+
 /** The waveform PNG as a scrubber: click/drag moves the playhead there,
  * starting playback if this sound wasn't playing. The PNG maps time 1:1
- * across its width, so pointer fraction × duration is the seek target. */
+ * across its width, so pointer fraction × duration is the seek target.
+ * With analysis data (fetched on first hover/touch), clicks snap to the
+ * nearest onset within SNAP_PX. */
 function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: string }) {
   const playing = playingId.value === sound.id;
   const frac =
     playing && sound.duration > 0
       ? Math.min(position.value / sound.duration, 1)
       : 0;
+  const onsets = onsetsFor(sound.id);
   const seekAtPointer = (e: PointerEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const f = pointerFraction(e.clientX, rect.left, rect.width);
-    seekTo(sound.id, preview, f * sound.duration);
+    const windowSec = rect.width > 0 ? (SNAP_PX / rect.width) * sound.duration : 0;
+    const t = snapToOnset(f * sound.duration, onsetsFor(sound.id), windowSec);
+    seekTo(sound.id, preview, t);
   };
   return (
     <div
       class="wave-wrap"
+      onPointerEnter={() => ensureOnsets(sound.id)}
       onPointerDown={(e) => {
+        ensureOnsets(sound.id);
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         seekAtPointer(e);
       }}
@@ -45,6 +60,16 @@ function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: stri
       }}
     >
       <img class="waveform" src={sound.images["waveform_m"]} alt="" loading="lazy" />
+      {onsets &&
+        sound.duration > 0 &&
+        onsets.length <= MAX_ONSET_TICKS &&
+        onsets.map((t) => (
+          <div
+            class="wave-onset"
+            key={t}
+            style={{ left: `${Math.min(t / sound.duration, 1) * 100}%` }}
+          />
+        ))}
       {playing && (
         <>
           <div class="wave-elapsed" style={{ width: `${frac * 100}%` }} />
