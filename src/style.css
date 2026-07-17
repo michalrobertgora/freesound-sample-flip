@@ -621,6 +621,14 @@ details.advanced summary {
   margin: 0.3rem 0;
 }
 
+/* The tag chips hug their text (no vertical padding), so the default
+ * 0.3rem margin above the chunky actions row reads as tighter than the
+ * card's other gaps. A little extra restores the vertical rhythm.
+ * `.card-body .actions` outranks `.card-body p` so this margin wins. */
+.card-body .actions {
+  margin-top: 0.6rem;
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;
@@ -646,15 +654,16 @@ details.advanced summary {
   margin-left: 0.15rem;
 }
 
+/* Author and the original-file link always stack on two lines; the link
+ * keeps its right-edge position via align-self. */
 .byline {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .original-link {
+  align-self: flex-end;
   text-decoration: none;
   white-space: nowrap;
 }
