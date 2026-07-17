@@ -1,6 +1,7 @@
 import type { ReadonlySignal } from "@preact/signals";
 import {
   formatDuration,
+  formatFilesize,
   formatSampleRate,
   licenseLabel,
   previewUrl,
@@ -100,7 +101,21 @@ function SoundCard({ sound }: { sound: FreesoundSound }) {
             {sound.name}
           </a>
         </h3>
-        <p class="muted small">by {sound.username}</p>
+        <p class="byline small">
+          <span class="muted">by {sound.username}</span>
+          {/* Teaches the affordance the title link only implies: the
+              full-quality original lives on the Freesound page. */}
+          <a
+            class="muted original-link"
+            href={sound.url}
+            target="_blank"
+            rel="noreferrer"
+            title="The full-quality original is on freesound.org (free login to download)"
+          >
+            original {sound.type}
+            {formatFilesize(sound.filesize) ? ` · ${formatFilesize(sound.filesize)}` : ""} ↗
+          </a>
+        </p>
         <p class="meta small">
           <span>{formatDuration(sound.duration)}</span>
           <span>
@@ -207,7 +222,7 @@ export function ResultsPane({
               {copied.value ? "Copied!" : "Copy set link"}
             </button>
             <span class="muted small">
-              pins these exact sounds — your friend opens it, no reroll
+              the copied URL links to this exact selection
             </span>
           </p>
           <div class="sound-grid">

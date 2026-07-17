@@ -1,4 +1,20 @@
 import { describe, expect, it } from "vitest";
+import { formatFilesize } from "./display";
+
+describe("formatFilesize", () => {
+  it("formats byte counts at a human scale", () => {
+    expect(formatFilesize(830)).toBe("0.8 kB");
+    expect(formatFilesize(245_760)).toBe("240 kB");
+    expect(formatFilesize(12_400_000)).toBe("11.8 MB");
+    expect(formatFilesize(1_073_741_824)).toBe("1.0 GB");
+  });
+
+  it("returns undefined for missing or nonsense sizes", () => {
+    expect(formatFilesize(undefined)).toBeUndefined();
+    expect(formatFilesize(0)).toBeUndefined();
+    expect(formatFilesize(-5)).toBeUndefined();
+  });
+});
 import { formatDuration, formatSampleRate, licenseLabel, previewUrl } from "./display";
 
 describe("licenseLabel", () => {

@@ -628,6 +628,24 @@ details.advanced summary {
   align-items: baseline;
 }
 
+.byline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.original-link {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.original-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 .badge {
   border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
   color: var(--accent);
