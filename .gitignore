@@ -10,3 +10,5 @@ proxy/.wrangler/
 
 # stray root artifacts
 /*.pdf
+# favicon source reference — never published
+/mpc_cropped.png
