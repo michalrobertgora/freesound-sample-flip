@@ -24,7 +24,21 @@ const positionSignal = signal(0);
  */
 export const position: ReadonlySignal<number> = positionSignal;
 
+const rateSignal = signal(1);
+const preservePitchSignal = signal(false);
+
+/** Playback speed multiplier (1 = normal). Global and sticky across sounds. */
+export const rate: ReadonlySignal<number> = rateSignal;
+
+/**
+ * Whether pitch is held constant when the speed changes. `false` (default)
+ * is vinyl/tape behaviour — pitch shifts with speed; `true` is time-stretch.
+ */
+export const preservePitch: ReadonlySignal<boolean> = preservePitchSignal;
+
 const audio = new Audio();
+// Vinyl by default (browser default is true = constant pitch).
+audio.preservesPitch = false;
 
 let rafId = 0;
 effect(() => {
@@ -70,10 +84,31 @@ export function stop(): void {
 function start(id: number, src: string): void {
   pendingSeek = null;
   audio.src = src;
+  // A load resets playbackRate to defaultPlaybackRate (spec §4.8.11.8), so
+  // re-assert rate + pitch after the src swap to keep them sticky.
+  applyRate();
   playingIdSignal.value = id;
   audio.play().catch(() => {
     if (playingIdSignal.value === id) playingIdSignal.value = null;
   });
+}
+
+function applyRate(): void {
+  audio.defaultPlaybackRate = rateSignal.value;
+  audio.playbackRate = rateSignal.value;
+  audio.preservesPitch = preservePitchSignal.value;
+}
+
+/** Set the global playback speed; takes effect immediately mid-play. */
+export function setRate(n: number): void {
+  rateSignal.value = n;
+  applyRate();
+}
+
+/** Toggle constant-pitch (`true`) vs vinyl pitch-shift (`false`). */
+export function setPreservePitch(on: boolean): void {
+  preservePitchSignal.value = on;
+  audio.preservesPitch = on;
 }
 
 /** Play `src` as `id`; if `id` is already playing, stop instead. */

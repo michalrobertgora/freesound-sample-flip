@@ -8,7 +8,16 @@ import {
 } from "../lib/display";
 import type { FreesoundError } from "../lib/freesound";
 import { ensureOnsets, onsetsFor } from "../lib/onsets";
-import { playingId, position, seekTo, toggle } from "../lib/player";
+import {
+  playingId,
+  position,
+  preservePitch,
+  rate,
+  seekTo,
+  setPreservePitch,
+  setRate,
+  toggle,
+} from "../lib/player";
 import { pointerFraction, snapToOnset } from "../lib/scrub";
 import type { FreesoundSound, LockedSlot } from "../lib/resolveSet";
 import { store } from "../store";
@@ -84,6 +93,41 @@ function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: stri
   );
 }
 
+const SPEED_PRESETS = [0.5, 1, 2];
+
+/** Global playback-speed presets + a vinyl/constant-pitch toggle. Controls
+ * the one shared player, so every card shows the same active state. */
+function SpeedControl() {
+  const active = rate.value;
+  const vinyl = !preservePitch.value;
+  return (
+    <span class="speed" role="group" aria-label="Playback speed">
+      {SPEED_PRESETS.map((n) => (
+        <button
+          key={n}
+          class={`speed-preset ${active === n ? "active" : ""}`}
+          aria-pressed={active === n}
+          onClick={() => setRate(n)}
+        >
+          {n}×
+        </button>
+      ))}
+      <button
+        class={`pitch-toggle ${vinyl ? "active" : ""}`}
+        aria-pressed={vinyl}
+        title={
+          vinyl
+            ? "Vinyl: pitch shifts with speed — click for constant pitch"
+            : "Constant pitch: speed only — click for vinyl pitch-shift"
+        }
+        onClick={() => setPreservePitch(vinyl)}
+      >
+        {vinyl ? "vinyl" : "keep pitch"}
+      </button>
+    </span>
+  );
+}
+
 function SoundCard({ sound }: { sound: FreesoundSound }) {
   const playing = playingId.value === sound.id;
   const preview = previewUrl(sound.previews);
@@ -147,6 +191,7 @@ function SoundCard({ sound }: { sound: FreesoundSound }) {
               Download preview (lossy mp3)
             </a>
           )}
+          <SpeedControl />
         </p>
       </div>
     </article>
