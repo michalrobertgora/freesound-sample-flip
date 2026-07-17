@@ -27,6 +27,26 @@ export function WeekSection() {
           </button>
         )}
       </div>
+      <div class="field">
+        <span>Samples</span>
+        <div class="week-row">
+          <button
+            aria-label="Fewer samples"
+            disabled={s.sampleCount <= MIN_SAMPLES}
+            onClick={() => store.update({ sampleCount: s.sampleCount - 1 })}
+          >
+            ◀
+          </button>
+          <strong class="week-label count-label">{s.sampleCount}</strong>
+          <button
+            aria-label="More samples"
+            disabled={s.sampleCount >= MAX_SAMPLES}
+            onClick={() => store.update({ sampleCount: s.sampleCount + 1 })}
+          >
+            ▶
+          </button>
+        </div>
+      </div>
       <label class="field">
         <span>
           Salt <span class="muted small">(agreed reroll, e.g. take2)</span>
@@ -35,24 +55,6 @@ export function WeekSection() {
           value={s.salt}
           onInput={(e) => store.update({ salt: (e.target as HTMLInputElement).value })}
         />
-      </label>
-      <label class="field">
-        <span>Samples</span>
-        <select
-          value={String(s.sampleCount)}
-          onChange={(e) =>
-            store.update({ sampleCount: Number((e.target as HTMLSelectElement).value) })
-          }
-        >
-          {Array.from(
-            { length: MAX_SAMPLES - MIN_SAMPLES + 1 },
-            (_, i) => MIN_SAMPLES + i,
-          ).map((n) => (
-            <option value={String(n)} key={n}>
-              {n}
-            </option>
-          ))}
-        </select>
       </label>
     </section>
   );

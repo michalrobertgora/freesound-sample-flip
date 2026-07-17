@@ -394,6 +394,11 @@ input[type="checkbox"] {
   color: var(--accent);
 }
 
+/* Single-digit sample count needs far less width than an ISO week. */
+.count-label {
+  min-width: 2ch;
+}
+
 fieldset.types {
   border: 1px solid var(--line);
   border-radius: var(--radius);
