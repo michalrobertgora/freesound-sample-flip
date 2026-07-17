@@ -229,6 +229,18 @@ details.info-pop .pop {
   box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
+details.info-pop .pop p {
+  margin: 0.5em 0;
+}
+
+details.info-pop .pop p:first-child {
+  margin-top: 0;
+}
+
+details.info-pop .pop p:last-child {
+  margin-bottom: 0;
+}
+
 .status {
   margin: 0.5rem 0;
 }

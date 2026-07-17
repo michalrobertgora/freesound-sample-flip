@@ -120,9 +120,20 @@ export function App() {
             <details class="info-pop">
               <summary aria-label="About this app" title="About">i</summary>
               <div class="pop small">
-                Weekly sample challenge — deterministic Freesound picks. Same
-                week, salt, and filters produce the same set on any machine;
-                share a set link to pin the exact sounds.
+                <p>
+                  Weekly sample challenge — deterministic Freesound picks. Same
+                  week, salt, and filters produce the same set on any machine;
+                  share a set link to pin the exact sounds.
+                </p>
+                <p>
+                  Downloading a sample's high-quality original needs a free
+                  Freesound account.
+                </p>
+                <p>
+                  Preview each sample at 0.5× / 1× / 2× speed, with variable
+                  (vinyl) or constant pitch — to feel how it will behave when
+                  you repitch it on your instruments later.
+                </p>
               </div>
             </details>
             <button
