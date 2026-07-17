@@ -31,6 +31,17 @@ function posToDur(pos: number): number {
 
 const FILE_TYPES = ["wav", "aiff", "flac", "mp3", "ogg", "m4a"];
 
+/** Popular tags as listed on freesound.org/search (ticket 09), in site order. */
+const POPULAR_TAGS = [
+  "field-recording", "multisample", "drum", "loop", "ambient", "single-note",
+  "synthesizer", "noise", "synth", "percussion", "ambience", "electronic",
+  "sound", "voice", "industrial", "bass", "nature", "soundscape", "music",
+  "water", "metal", "dark", "drums", "samples", "atmosphere", "soundtrack",
+  "weird", "effect", "fx", "underground", "sci-fi", "beat", "alien", "sfx",
+  "foley", "birds", "hit", "ambiance", "horror", "sample", "game", "piano",
+  "glitch", "loopable", "guitar", "drone", "city", "snare", "packs", "vocal",
+];
+
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const TONALITIES = NOTES.flatMap((n) => [`${n} major`, `${n} minor`]);
 
@@ -39,6 +50,61 @@ function toggleType(t: string): void {
   if (cur.has(t)) cur.delete(t);
   else cur.add(t);
   store.updateFilters({ types: [...cur] });
+}
+
+function toggleTag(t: string): void {
+  const cur = store.state.value.filters.tags;
+  store.updateFilters({
+    tags: cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t],
+  });
+}
+
+function addCustomTag(input: HTMLInputElement): void {
+  const t = input.value.trim();
+  if (t && !store.state.value.filters.tags.includes(t)) toggleTag(t);
+  input.value = "";
+}
+
+function TagChips() {
+  const tags = store.state.value.filters.tags;
+  const custom = tags.filter((t) => !POPULAR_TAGS.includes(t));
+  return (
+    <div class="field">
+      <span>Tags</span>
+      <div class="chips">
+        {POPULAR_TAGS.map((t) => (
+          <button
+            type="button"
+            key={t}
+            class={`chip ${tags.includes(t) ? "selected" : ""}`}
+            aria-pressed={tags.includes(t)}
+            onClick={() => toggleTag(t)}
+          >
+            {t}
+          </button>
+        ))}
+        {custom.map((t) => (
+          <button
+            type="button"
+            key={t}
+            class="chip selected custom"
+            title="Remove tag"
+            onClick={() => toggleTag(t)}
+          >
+            {t} ×
+          </button>
+        ))}
+      </div>
+      <input
+        class="chip-input"
+        placeholder="Add your own tag…"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") addCustomTag(e.target as HTMLInputElement);
+        }}
+        onBlur={(e) => addCustomTag(e.target as HTMLInputElement)}
+      />
+    </div>
+  );
 }
 
 export function FiltersSection() {
@@ -58,24 +124,7 @@ export function FiltersSection() {
           }
         />
       </label>
-      <label class="field">
-        <span>
-          Tags <span class="muted small">(comma-separated)</span>
-        </span>
-        <input
-          key={f.tags.join(",")}
-          defaultValue={f.tags.join(", ")}
-          placeholder="e.g. field-recording, metal"
-          onChange={(e) =>
-            store.updateFilters({
-              tags: (e.target as HTMLInputElement).value
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean),
-            })
-          }
-        />
-      </label>
+      <TagChips />
       <div class="field">
         <span>
           Duration: {formatNum(dmin)}–{formatNum(dmax)} s
