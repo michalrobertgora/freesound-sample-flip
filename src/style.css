@@ -761,23 +761,25 @@ details.advanced summary {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0.1rem;
   /* Wrap to a second line on narrow cards instead of clipping under the
-   * card's overflow: hidden. Only wraps when it doesn't fit. */
+   * card's overflow: hidden. Only wraps when it doesn't fit. The group is
+   * kept compact so a fallback-font render on a fresh locked-set load
+   * doesn't tip a full-width card into wrapping. */
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .speed-preset,
 .pitch-toggle {
-  padding: 0.05rem 0.4rem;
+  padding: 0.05rem 0.3rem;
   font-size: 0.72rem;
   border-radius: var(--radius-pill);
   background: transparent;
 }
 
 .pitch-toggle {
-  margin-left: 0.3rem;
+  margin-left: 0.15rem;
   letter-spacing: 0.02em;
   /* Fixed width so the label swap (re-pitch ↔ keep pitch) doesn't resize it.
    * The UI font is monospace, so "keep pitch" is ~5.6rem wide; 6rem clears
