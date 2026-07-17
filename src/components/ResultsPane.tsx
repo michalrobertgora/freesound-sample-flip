@@ -243,7 +243,10 @@ export function ResultsPane({
   const s = set.value;
   return (
     <main class="results">
-      <h2>This week's set</h2>
+      <div class="results-header">
+        <h2>This week's set</h2>
+        <HistoryOverlay />
+      </div>
       {s.status === "idle" && (
         <p class="muted idle-hint">
           Tune the filters, then <button onClick={onGenerate}>Generate</button>
@@ -274,7 +277,6 @@ export function ResultsPane({
             <span class="muted small">
               the copied URL links to this exact selection
             </span>
-            <HistoryOverlay />
           </div>
           <div class="sound-grid">
             {s.slots.map((slot) =>

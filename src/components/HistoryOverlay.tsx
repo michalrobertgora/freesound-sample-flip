@@ -7,9 +7,11 @@
 import { clearHistory, history, type HistoryEntry } from "../lib/history";
 
 function formatWhen(ms: number): string {
-  return new Date(ms).toLocaleDateString(undefined, {
+  return new Date(ms).toLocaleString(undefined, {
     month: "short",
     day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 

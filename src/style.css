@@ -96,6 +96,20 @@ body {
   overflow-y: auto;
 }
 
+/* Header row: the ruled section title grows to push History to the right,
+ * so the History button is present in every results state. */
+.results-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.results-header h2 {
+  flex: 1;
+  margin: 0;
+}
+
 .muted {
   opacity: 0.62;
 }
@@ -174,8 +188,14 @@ a:hover {
 }
 
 .theme-toggle {
-  padding: 0.1rem 0.55rem;
-  line-height: 1.5;
+  /* Match the info button so both are the same circle. */
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   border-radius: var(--radius-pill);
 }
 
@@ -755,6 +775,9 @@ details.advanced summary {
 .pitch-toggle {
   margin-left: 0.3rem;
   letter-spacing: 0.02em;
+  /* Fixed width so the label swap (re-pitch ↔ keep pitch) doesn't resize it. */
+  min-width: 4.5rem;
+  text-align: center;
 }
 
 .speed-preset.active,
