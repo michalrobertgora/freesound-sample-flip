@@ -762,6 +762,10 @@ details.advanced summary {
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
+  /* Wrap to a second line on narrow cards instead of clipping under the
+   * card's overflow: hidden. Only wraps when it doesn't fit. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .speed-preset,
