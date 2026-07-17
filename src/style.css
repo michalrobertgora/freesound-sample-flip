@@ -168,7 +168,7 @@ a:hover {
 
 .title-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
@@ -626,6 +626,12 @@ details.advanced summary {
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
   align-items: baseline;
+}
+
+/* Push the license badge to the row's right edge so it lines up
+ * card-to-card regardless of the type/samplerate text length. */
+.meta .badge {
+  margin-left: auto;
 }
 
 /* Inline Generate button inside the idle hint: mute via color, not the
