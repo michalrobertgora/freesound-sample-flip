@@ -39,7 +39,7 @@ export function defaultState(): AppState {
     week: currentIsoWeek(),
     salt: "",
     sampleCount: DEFAULT_SAMPLE_COUNT,
-    filters: { ...DEFAULT_FILTERS, tags: [], types: [] },
+    filters: { ...DEFAULT_FILTERS, tags: [], types: [...DEFAULT_FILTERS.types] },
     ids: [],
   };
 }
@@ -55,6 +55,10 @@ function parseList(v: string | null): string[] {
 }
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+/** Order-insensitive equality — the canonical filter string sorts anyway. */
+const sameSet = (a: string[], b: string[]) =>
+  a.length === b.length && [...a].sort().join(",") === [...b].sort().join(",");
 
 function parseDate(v: string | null): string | null {
   return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
@@ -87,7 +91,9 @@ export function parseState(search: string): AppState {
       tags: parseList(q.get("tags")),
       durationMin: q.has("dmin") ? dmin : d.filters.durationMin,
       durationMax: q.has("dmax") ? dmax : d.filters.durationMax,
-      types: parseList(q.get("type")),
+      // Default is non-empty, so "no types" needs an explicit marker:
+      // absent param → default, `type=` → none (same pattern as dmin/dmax).
+      types: q.has("type") ? parseList(q.get("type")) : [...d.filters.types],
       license: q.get("lic") ?? "",
       tonality: q.get("ton") ?? "",
       loopable: q.get("loop") === "1",
@@ -125,7 +131,8 @@ export function serializeState(s: AppState): string {
     q.set("dmin", s.filters.durationMin === null ? "" : String(s.filters.durationMin));
   if (s.filters.durationMax !== d.filters.durationMax)
     q.set("dmax", s.filters.durationMax === null ? "" : String(s.filters.durationMax));
-  if (s.filters.types.length) q.set("type", s.filters.types.join(","));
+  if (!sameSet(s.filters.types, d.filters.types))
+    q.set("type", s.filters.types.join(","));
   if (s.filters.license) q.set("lic", s.filters.license);
   const f = s.filters;
   if (f.tonality) q.set("ton", f.tonality);

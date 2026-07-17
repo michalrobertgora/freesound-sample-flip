@@ -31,14 +31,8 @@ function posToDur(pos: number): number {
 
 const FILE_TYPES = ["wav", "aiff", "flac", "mp3", "ogg", "m4a"];
 
-/** Live-verified 2026-07-16: exactly these strings match sounds in the
- * API's license filter ("Attribution Noncommercial" matches nothing). */
-const LICENSES: Array<[value: string, label: string]> = [
-  ["", "Any"],
-  ["Creative Commons 0", "CC0"],
-  ["Attribution", "CC-BY"],
-  ["Attribution NonCommercial", "CC-BY-NC"],
-];
+const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const TONALITIES = NOTES.flatMap((n) => [`${n} major`, `${n} minor`]);
 
 function toggleType(t: string): void {
   const cur = new Set(store.state.value.filters.types);
@@ -123,20 +117,39 @@ export function FiltersSection() {
         ))}
       </fieldset>
       <label class="field">
-        <span>License</span>
+        <span>Tonality</span>
         <select
-          value={f.license}
+          value={f.tonality}
           onChange={(e) =>
-            store.updateFilters({ license: (e.target as HTMLSelectElement).value })
+            store.updateFilters({ tonality: (e.target as HTMLSelectElement).value })
           }
         >
-          {LICENSES.map(([value, label]) => (
-            <option value={value} key={value}>
-              {label}
+          <option value="">Any</option>
+          {TONALITIES.map((t) => (
+            <option value={t} key={t}>
+              {t}
             </option>
           ))}
         </select>
       </label>
+      <div class="field">
+        <label class="inline">
+          <input
+            type="checkbox"
+            checked={f.loopable}
+            onChange={() => store.updateFilters({ loopable: !f.loopable })}
+          />{" "}
+          loopable
+        </label>
+        <label class="inline">
+          <input
+            type="checkbox"
+            checked={f.singleEvent}
+            onChange={() => store.updateFilters({ singleEvent: !f.singleEvent })}
+          />{" "}
+          single event
+        </label>
+      </div>
     </section>
   );
 }

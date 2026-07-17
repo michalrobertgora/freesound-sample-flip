@@ -121,6 +121,18 @@ describe("advanced filters (ticket 06)", () => {
   });
 });
 
+describe("default file types (ticket 08)", () => {
+  it("pins the new pristine-default string — a deliberate seed break", () => {
+    // Pre-ticket pristine states produced "duration:[0.5 TO 30]"; wav+mp3
+    // are now checked by default, so pristine seeds change. Recorded in
+    // ticket 08's comments; explicit type selections are unaffected.
+    expect(canonicalFilterString({ ...DEFAULT_FILTERS })).toBe(
+      "duration:[0.5 TO 30] type:(mp3 OR wav)",
+    );
+    expect(DEFAULT_FILTERS.types).toEqual(["wav", "mp3"]);
+  });
+});
+
 describe("seedString", () => {
   it("is stable for equivalent inputs", () => {
     const a = seedString("2026-W29", " Reroll ", 4, {

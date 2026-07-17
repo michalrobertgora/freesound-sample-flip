@@ -58,7 +58,9 @@ export const DEFAULT_FILTERS: FilterParams = {
   tags: [],
   durationMin: 0.5,
   durationMax: 30,
-  types: [],
+  // Non-empty default (ticket 08): pristine states now filter to wav+mp3,
+  // which changed pristine-state seeds — recorded in the ticket comments.
+  types: ["wav", "mp3"],
   license: "",
   tonality: "",
   loopable: false,

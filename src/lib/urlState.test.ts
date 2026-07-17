@@ -27,6 +27,30 @@ describe("advanced params round-trip (ticket 06)", () => {
   });
 });
 
+describe("default file types (ticket 08)", () => {
+  it("defaults to wav+mp3 and omits them from a pristine URL", () => {
+    expect(parseState("?w=2026-W29").filters.types).toEqual(["wav", "mp3"]);
+    expect(ser(parseState("?w=2026-W29"))).toBe("w=2026-W29");
+  });
+
+  it("keeps an explicit empty marker for 'no types checked'", () => {
+    const s = parseState("?w=2026-W29&type=");
+    expect(s.filters.types).toEqual([]);
+    expect(ser(s)).toContain("type=");
+    expect(parseState(`?${ser(s)}`)).toEqual(s);
+  });
+
+  it("omits the param when the selection equals the default as a set", () => {
+    expect(ser(parseState("?w=2026-W29&type=mp3,wav"))).toBe("w=2026-W29");
+  });
+
+  it("serializes non-default selections explicitly and round-trips them", () => {
+    const s = parseState("?w=2026-W29&type=flac");
+    expect(ser(s)).toContain("type=flac");
+    expect(parseState(`?${ser(s)}`)).toEqual(s);
+  });
+});
+
 describe("ids cap", () => {
   it("caps hand-crafted ids lists at the single-request page size", () => {
     const many = Array.from({ length: 200 }, (_, i) => i + 1).join(",");

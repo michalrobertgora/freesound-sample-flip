@@ -124,7 +124,10 @@ describe("createAppStore", () => {
   describe("derived signals", () => {
     it("pins the seed to the golden cross-machine format", () => {
       const store = createAppStore(fakeUrl("?w=2026-W29").adapter);
-      expect(store.seed.value).toBe("2026-W29||4||duration:[0.5 TO 30]");
+      // Ticket 08 seed break: pristine defaults now include type:(mp3 OR wav).
+      expect(store.seed.value).toBe(
+        "2026-W29||4||duration:[0.5 TO 30] type:(mp3 OR wav)",
+      );
     });
 
     it("derives canonicalFilter and normalized query reactively", () => {

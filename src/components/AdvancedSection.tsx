@@ -1,8 +1,14 @@
 import type { FilterParams } from "../lib/filters";
 import { store } from "../store";
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const TONALITIES = NOTES.flatMap((n) => [`${n} major`, `${n} minor`]);
+/** Live-verified 2026-07-16: exactly these strings match sounds in the
+ * API's license filter ("Attribution Noncommercial" matches nothing). */
+const LICENSES: Array<[value: string, label: string]> = [
+  ["", "Any"],
+  ["Creative Commons 0", "CC0"],
+  ["Attribution", "CC-BY"],
+  ["Attribution NonCommercial", "CC-BY-NC"],
+];
 
 /** Default "recorded near" center: Warsaw. Replaced by use-my-location. */
 const DEFAULT_GEO = { lat: 52.2297, lon: 21.0122, radiusKm: 10 };
@@ -11,9 +17,7 @@ const round4 = (n: number) => Math.round(n * 10000) / 10000;
 
 function activeAdvancedCount(f: FilterParams): number {
   return [
-    f.tonality !== "",
-    f.loopable,
-    f.singleEvent,
+    f.license !== "",
     f.brightnessMin !== null,
     f.warmthMin !== null,
     f.hardnessMin !== null,
@@ -106,39 +110,20 @@ export function AdvancedSection() {
         Advanced {active > 0 && <span class="badge">{active} active</span>}
       </summary>
       <label class="field">
-        <span>Tonality</span>
+        <span>License</span>
         <select
-          value={f.tonality}
+          value={f.license}
           onChange={(e) =>
-            store.updateFilters({ tonality: (e.target as HTMLSelectElement).value })
+            store.updateFilters({ license: (e.target as HTMLSelectElement).value })
           }
         >
-          <option value="">Any</option>
-          {TONALITIES.map((t) => (
-            <option value={t} key={t}>
-              {t}
+          {LICENSES.map(([value, label]) => (
+            <option value={value} key={value}>
+              {label}
             </option>
           ))}
         </select>
       </label>
-      <div class="field">
-        <label class="inline">
-          <input
-            type="checkbox"
-            checked={f.loopable}
-            onChange={() => store.updateFilters({ loopable: !f.loopable })}
-          />{" "}
-          loopable
-        </label>
-        <label class="inline">
-          <input
-            type="checkbox"
-            checked={f.singleEvent}
-            onChange={() => store.updateFilters({ singleEvent: !f.singleEvent })}
-          />{" "}
-          single event
-        </label>
-      </div>
       <PerceptualSlider
         label="Brightness"
         value={f.brightnessMin}
