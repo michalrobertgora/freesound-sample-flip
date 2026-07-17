@@ -17,6 +17,7 @@ import { ResultsPane, type SetState } from "./components/ResultsPane";
 import { WeekSection } from "./components/WeekSection";
 import { canonicalFilterString, normalizeText } from "./lib/filters";
 import { makeCachedCountFetcher } from "./lib/freesound";
+import { entryFromSet, saveSet } from "./lib/history";
 import * as player from "./lib/player";
 import { resolveLockedSet, resolveSeededSet, type LockedSlot } from "./lib/resolveSet";
 import { isDark, toggleTheme } from "./lib/theme";
@@ -43,9 +44,14 @@ async function generateSet(): Promise<void> {
           r.ok ? { ok: true as const, slots: r.sounds as LockedSlot[] } : r,
         );
   if (id !== generation) return; // a newer generate superseded this one
-  setState.value = result.ok
-    ? { status: "ok", slots: result.slots }
-    : { status: "error", error: result.error };
+  if (!result.ok) {
+    setState.value = { status: "error", error: result.error };
+    return;
+  }
+  setState.value = { status: "ok", slots: result.slots };
+  // Every resolved set (seeded, reroll, or a locked link opened on load) is
+  // saved to history, deduped by URL so a reopened link doesn't stack.
+  saveSet(entryFromSet(setLinkFor(result.slots), s.week, result.slots));
 }
 
 // The lock-clearing invariant's side effects, wired once: the store
@@ -80,10 +86,14 @@ effect(() => {
   }, 300);
 });
 
-async function copySetLink(slots: LockedSlot[]): Promise<void> {
+/** Full share URL (with ids) that reopens this exact set. */
+function setLinkFor(slots: LockedSlot[]): string {
   const qs = serializeState({ ...store.state.value, ids: slots.map((s) => s.id) });
-  const url = `${location.origin}${location.pathname}?${qs}`;
-  await navigator.clipboard.writeText(url);
+  return `${location.origin}${location.pathname}?${qs}`;
+}
+
+async function copySetLink(slots: LockedSlot[]): Promise<void> {
+  await navigator.clipboard.writeText(setLinkFor(slots));
   copied.value = true;
   setTimeout(() => {
     copied.value = false;

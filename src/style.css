@@ -216,7 +216,8 @@ details.info-pop[open] summary {
   border-color: var(--accent);
 }
 
-details.info-pop .pop {
+/* Anchored popover panel, shared by the info and history popovers. */
+.pop {
   position: absolute;
   right: 0;
   top: calc(100% + 0.4rem);
@@ -229,16 +230,75 @@ details.info-pop .pop {
   box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
-details.info-pop .pop p {
+.pop p {
   margin: 0.5em 0;
 }
 
-details.info-pop .pop p:first-child {
+.pop p:first-child {
   margin-top: 0;
 }
 
-details.info-pop .pop p:last-child {
+.pop p:last-child {
   margin-bottom: 0;
+}
+
+/* History popover: a normal-looking button that opens a list of saved sets. */
+.history-pop {
+  position: relative;
+  margin-left: auto;
+}
+
+.history-pop summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+
+.history-pop summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-pop[open] summary {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.history-panel {
+  width: 22rem;
+  max-width: min(22rem, 80vw);
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.history-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  margin: 0.15rem 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+}
+
+.history-entry:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: none;
+  transform: none;
+}
+
+.history-names {
+  overflow-wrap: anywhere;
+}
+
+.history-clear {
+  margin-top: 0.4rem;
 }
 
 .status {
@@ -712,6 +772,12 @@ details.advanced summary {
   flex-wrap: wrap;
 }
 
+/* Results actions row is a <div> (it holds the History <details>), so it
+ * lacks the paragraph margin the old <p> had — restore the spacing. */
+.results-actions {
+  margin: 0.65rem 0;
+}
+
 /* --- Loading skeletons: same footprint as a card, so nothing jumps --- */
 
 .card.skeleton {
@@ -811,7 +877,8 @@ details.advanced summary {
  * disturb the stacked layout. */
 .repo-link {
   position: fixed;
-  right: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 0.45rem;
   z-index: 20;
   font-size: 0.7rem;

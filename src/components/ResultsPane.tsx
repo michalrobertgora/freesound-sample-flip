@@ -8,6 +8,7 @@ import {
 } from "../lib/display";
 import type { FreesoundError } from "../lib/freesound";
 import { ensureOnsets, onsetsFor } from "../lib/onsets";
+import { HistoryOverlay } from "./HistoryOverlay";
 import {
   playingId,
   position,
@@ -263,7 +264,7 @@ export function ResultsPane({
       )}
       {s.status === "ok" && (
         <>
-          <p class="actions">
+          <div class="actions results-actions">
             <button
               class={copied.value ? "copied" : ""}
               onClick={() => onCopyLink(s.slots)}
@@ -273,7 +274,8 @@ export function ResultsPane({
             <span class="muted small">
               the copied URL links to this exact selection
             </span>
-          </p>
+            <HistoryOverlay />
+          </div>
           <div class="sound-grid">
             {s.slots.map((slot) =>
               "missing" in slot ? (
