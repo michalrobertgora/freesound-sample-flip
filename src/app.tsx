@@ -94,7 +94,8 @@ const generateDisabled = computed(() => setState.value.status === "loading");
 
 export function App() {
   return (
-    <div class="layout">
+    <>
+      <div class="layout">
       <aside class="controls">
         <div class="title-row">
           <h1>Freesound Flip</h1>
@@ -155,6 +156,15 @@ export function App() {
         onGenerate={() => void generateSet()}
         onCopyLink={(slots) => void copySetLink(slots)}
       />
-    </div>
+      </div>
+      <a
+        class="repo-link"
+        href="https://github.com/michalrobertgora/freesound-sample-flip"
+        target="_blank"
+        rel="noreferrer"
+      >
+        source ↗
+      </a>
+    </>
   );
 }

@@ -807,8 +807,32 @@ details.advanced summary {
   }
 }
 
+/* Small fixed repo link, bottom-right; hidden on mobile so it can't
+ * disturb the stacked layout. */
+.repo-link {
+  position: fixed;
+  right: 0.6rem;
+  bottom: 0.45rem;
+  z-index: 20;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--fg);
+  opacity: 0.4;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.repo-link:hover {
+  opacity: 0.9;
+  text-decoration: underline;
+}
+
 /* Stack panes on narrow screens */
 @media (max-width: 720px) {
+  .repo-link {
+    display: none;
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }

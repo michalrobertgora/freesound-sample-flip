@@ -78,3 +78,7 @@ served from a domain root or any subpath. Pushing to `master` runs
 `.github/workflows/deploy.yml` (test → build → deploy to Pages).
 
 The API proxy is deployed separately; see `proxy/README.md`.
+
+## License
+
+GPL-3.0-or-later. Copyright © 2026 Michał Góra. See `LICENSE`.
