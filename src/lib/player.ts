@@ -64,18 +64,26 @@ export function stop(): void {
   playingIdSignal.value = null;
 }
 
+/** Swap the source and start playing as `id`. Clears any seek queued for
+ * the previous source — without this, a pre-load seek on track A would be
+ * re-asserted onto track B's loadedmetadata. */
+function start(id: number, src: string): void {
+  pendingSeek = null;
+  audio.src = src;
+  playingIdSignal.value = id;
+  audio.play().catch(() => {
+    if (playingIdSignal.value === id) playingIdSignal.value = null;
+  });
+}
+
 /** Play `src` as `id`; if `id` is already playing, stop instead. */
 export function toggle(id: number, src: string): void {
   if (playingIdSignal.value === id) {
     stop();
     return;
   }
-  audio.src = src;
   positionSignal.value = 0;
-  playingIdSignal.value = id;
-  audio.play().catch(() => {
-    if (playingIdSignal.value === id) playingIdSignal.value = null;
-  });
+  start(id, src);
 }
 
 /**
@@ -85,13 +93,7 @@ export function toggle(id: number, src: string): void {
  * loadedmetadata for old-WebKit safety).
  */
 export function seekTo(id: number, src: string, seconds: number): void {
-  if (playingIdSignal.value !== id) {
-    audio.src = src;
-    playingIdSignal.value = id;
-    audio.play().catch(() => {
-      if (playingIdSignal.value === id) playingIdSignal.value = null;
-    });
-  }
+  if (playingIdSignal.value !== id) start(id, src);
   audio.currentTime = seconds;
   if (audio.readyState === HTMLMediaElement.HAVE_NOTHING) pendingSeek = seconds;
   positionSignal.value = seconds;

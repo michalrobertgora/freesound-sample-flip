@@ -38,11 +38,14 @@ function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: stri
       ? Math.min(position.value / sound.duration, 1)
       : 0;
   const onsets = onsetsFor(sound.id);
-  const seekAtPointer = (e: PointerEvent) => {
+  // Snap applies to the initial press only — dragging stays continuous
+  // (a snapping drag would stick to onsets and fight the pointer).
+  const seekAtPointer = (e: PointerEvent, snap: boolean) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const f = pointerFraction(e.clientX, rect.left, rect.width);
+    const raw = f * sound.duration;
     const windowSec = rect.width > 0 ? (SNAP_PX / rect.width) * sound.duration : 0;
-    const t = snapToOnset(f * sound.duration, onsetsFor(sound.id), windowSec);
+    const t = snap ? snapToOnset(raw, onsetsFor(sound.id), windowSec) : raw;
     seekTo(sound.id, preview, t);
   };
   return (
@@ -52,11 +55,11 @@ function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: stri
       onPointerDown={(e) => {
         ensureOnsets(sound.id);
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-        seekAtPointer(e);
+        seekAtPointer(e, true);
       }}
       onPointerMove={(e) => {
         if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId))
-          seekAtPointer(e);
+          seekAtPointer(e, false);
       }}
     >
       <img class="waveform" src={sound.images["waveform_m"]} alt="" loading="lazy" />

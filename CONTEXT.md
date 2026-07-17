@@ -36,7 +36,12 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
   state and the lock-clearing invariant. Seam: the **URL adapter**
   (browser history in the app, recording fake in tests).
 - **Player** (`src/lib/player.ts`) — deep module owning the one shared audio
-  element. Interface: `playingId`, `toggle(id, src)`, `stop()`. Domain-free.
+  element. Interface: `playingId`, `position`, `toggle(id, src)`,
+  `seekTo(id, src, seconds)`, `stop()`. Domain-free.
+- **Onsets cache** (`src/lib/onsetsCache.ts`, wired in `src/lib/onsets.ts`) —
+  lazy per-sound `onset_times` from the analysis resource, fetched on scrub
+  intent, cached per session (404 permanent, other failures retryable).
+  Seam: the same Transport shape as every network module.
 - **Set resolution** (`src/lib/resolveSet.ts`) — the seam between app state
   and the network: state + transport in, resolved set or typed error out.
 - **Transport** (`src/lib/freesound.ts`) — fetch-shaped adapter; real `fetch`
