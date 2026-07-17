@@ -628,6 +628,18 @@ details.advanced summary {
   align-items: baseline;
 }
 
+/* Inline Generate button inside the idle hint: mute via color, not the
+ * .muted opacity, so the button inside stays fully opaque. */
+.idle-hint {
+  opacity: 1;
+  color: color-mix(in srgb, var(--fg) 65%, transparent);
+}
+
+.idle-hint button {
+  color: var(--fg);
+  margin-left: 0.15rem;
+}
+
 .byline {
   display: flex;
   justify-content: space-between;
