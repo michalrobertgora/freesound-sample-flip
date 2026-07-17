@@ -7,3 +7,6 @@ dist/
 .dev.vars
 proxy/.dev.vars
 proxy/.wrangler/
+
+# stray root artifacts
+/*.pdf
