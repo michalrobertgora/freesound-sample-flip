@@ -19,6 +19,7 @@ import { canonicalFilterString, normalizeText } from "./lib/filters";
 import { makeCachedCountFetcher } from "./lib/freesound";
 import * as player from "./lib/player";
 import { resolveLockedSet, resolveSeededSet, type LockedSlot } from "./lib/resolveSet";
+import { isDark, toggleTheme } from "./lib/theme";
 import { serializeState } from "./lib/urlState";
 import { store } from "./store";
 
@@ -113,7 +114,16 @@ export function App() {
   return (
     <div class="layout">
       <aside class="controls">
-        <h1>Cotygodniowy Flip</h1>
+        <div class="title-row">
+          <h1>Cotygodniowy Flip</h1>
+          <button
+            class="small theme-toggle"
+            onClick={toggleTheme}
+            title="Toggle light/dark theme"
+          >
+            {isDark.value ? "☀" : "☾"}
+          </button>
+        </div>
         <p class="muted">Weekly sample challenge — deterministic Freesound picks.</p>
         <ApiKeyControls />
         {/* fieldset[disabled] inert-ifies every control while no key exists */}

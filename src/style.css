@@ -1,5 +1,33 @@
+@import "tailwindcss";
+
+/* Manual theme: `dark` class on <html> (set pre-paint in index.html,
+ * kept in sync by src/lib/theme.ts). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens (ticket 12). Ticket 13 swaps the values, not the names.
+ * Component rules below still lean on currentColor mixes, so most of the
+ * theme flows from --bg/--fg alone. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --bg: #fbfaf8;
+  --fg: #23252a;
+  --accent: #4a5d4e;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --bg: #191b1e;
+  --fg: #dfdcd5;
+  --accent: #9db8a1;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-accent: var(--accent);
+}
+
+:root {
   font-family: system-ui, sans-serif;
   line-height: 1.5;
 }
@@ -11,6 +39,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .layout {
@@ -46,6 +76,18 @@ pre {
 h1 {
   font-size: 1.3rem;
   margin: 0 0 0.25rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.theme-toggle {
+  padding: 0.1rem 0.5rem;
+  line-height: 1.4;
 }
 
 .key-input {
@@ -364,8 +406,25 @@ details.advanced summary {
   }
 }
 
+/* Preflight compensation: Tailwind zeroes heading/paragraph margins and
+ * inherits their weight; restore the pre-Tailwind rhythm. */
 h2 {
   font-size: 1rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+}
+
+h3 {
+  font-weight: 700;
+}
+
+p {
+  margin: 0.65em 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 /* Stack panes on narrow screens */
