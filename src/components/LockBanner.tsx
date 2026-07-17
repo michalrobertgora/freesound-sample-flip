@@ -7,8 +7,8 @@ export function LockBanner() {
     <section class="lock-banner">
       <p class="status">
         🔒 <strong>Locked set</strong> — this link pins {ids.length} exact
-        sounds; the seeded draw is bypassed. Changing any control (or
-        unlocking) clears the lock.
+        sounds; the seeded draw is bypassed and the filters are frozen. Unlock
+        to edit them and draw a fresh set.
       </p>
       <button onClick={() => store.unlock()}>Unlock &amp; edit</button>
     </section>

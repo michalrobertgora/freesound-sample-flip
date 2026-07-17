@@ -21,9 +21,10 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
 - **Locked set** — a set pinned by explicit sound IDs (`ids=` in the URL);
   bypasses the seeded pipeline entirely. Whoever generates first defines the
   week's set. *Avoid:* "saved set", "playlist".
-- **Lock-clearing invariant** — editing any control while a lock is active
-  clears the lock and resets the shown set; controls and set never silently
-  diverge. Owned by the app store; side effects wired via `onLockCleared`.
+- **Explicit unlock** — while a lock is active the filter pane is disabled
+  (greyed), so the pinned set and the controls can't silently diverge. The
+  **Unlock** button is the only way to clear a lock; it resets the shown set
+  and stops playback via `onLockCleared`. Owned by the app store.
 - **Slot** — one position in a resolved set, in draw order: a sound, or a
   **missing sound** placeholder when Freesound deleted it.
 - **Count** — the live number of sounds matching the filters. Quantized

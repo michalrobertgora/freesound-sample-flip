@@ -61,53 +61,21 @@ describe("createAppStore", () => {
     expect(store.state.value.filters.query).toBe("drone");
   });
 
-  describe("lock-clearing invariant", () => {
-    it("clears ids and fires onLockCleared when any control changes under a lock", () => {
+  describe("explicit unlock", () => {
+    it("keeps the lock when other controls change (no auto-clear on edit)", () => {
       const url = fakeUrl("?w=2026-W29&ids=1,2,3");
       const store = createAppStore(url.adapter);
       const cleared = vi.fn();
       store.onLockCleared(cleared);
 
       store.update({ salt: "x" });
-
-      expect(store.state.value.ids).toEqual([]);
-      expect(cleared).toHaveBeenCalledTimes(1);
-      expect(url.writes[0]).not.toContain("ids=");
-    });
-
-    it("filter edits under a lock clear it too", () => {
-      const url = fakeUrl("?w=2026-W29&ids=7,8,9");
-      const store = createAppStore(url.adapter);
-      const cleared = vi.fn();
-      store.onLockCleared(cleared);
-
       store.updateFilters({ query: "rain" });
 
-      expect(store.state.value.ids).toEqual([]);
-      expect(cleared).toHaveBeenCalledTimes(1);
-    });
-
-    it("does not fire when the patch itself carries ids", () => {
-      const url = fakeUrl("?w=2026-W29&ids=1,2");
-      const store = createAppStore(url.adapter);
-      const cleared = vi.fn();
-      store.onLockCleared(cleared);
-
-      store.update({ ids: [4, 5, 6] });
-
-      expect(store.state.value.ids).toEqual([4, 5, 6]);
+      expect(store.state.value.ids).toEqual([1, 2, 3]);
       expect(cleared).not.toHaveBeenCalled();
     });
 
-    it("does not fire when no lock is active", () => {
-      const store = createAppStore(fakeUrl("?w=2026-W29").adapter);
-      const cleared = vi.fn();
-      store.onLockCleared(cleared);
-      store.update({ salt: "x" });
-      expect(cleared).not.toHaveBeenCalled();
-    });
-
-    it("unlock() clears ids and fires", () => {
+    it("unlock() clears ids, fires onLockCleared, and drops ids from the URL", () => {
       const url = fakeUrl("?w=2026-W29&ids=1,2,3");
       const store = createAppStore(url.adapter);
       const cleared = vi.fn();
@@ -118,6 +86,18 @@ describe("createAppStore", () => {
       expect(store.state.value.ids).toEqual([]);
       expect(cleared).toHaveBeenCalledTimes(1);
       expect(url.writes[0]).not.toContain("ids=");
+    });
+
+    it("setting ids replaces the lock without firing onLockCleared", () => {
+      const url = fakeUrl("?w=2026-W29&ids=1,2");
+      const store = createAppStore(url.adapter);
+      const cleared = vi.fn();
+      store.onLockCleared(cleared);
+
+      store.update({ ids: [4, 5, 6] });
+
+      expect(store.state.value.ids).toEqual([4, 5, 6]);
+      expect(cleared).not.toHaveBeenCalled();
     });
   });
 

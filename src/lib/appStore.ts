@@ -2,11 +2,11 @@
  * The app store: URL-backed application state behind a small interface.
  *
  * The URL is the single source of truth; the store owns parse-on-create,
- * write-back on every change, re-parse on browser navigation, and the
- * lock-clearing invariant: editing anything while an ID lock is active
- * clears the lock — controls and set must never silently diverge. The
- * invariant's *decision* lives here; its side effects (stop playback,
- * reset results) are wired by the composition root via `onLockCleared`.
+ * write-back on every change, and re-parse on browser navigation. A lock
+ * (ids in the URL) is cleared only by the explicit `unlock()` — the UI
+ * disables the controls while locked, so editing can't silently diverge
+ * from the pinned set. `unlock()`'s side effects (stop playback, reset
+ * results) are wired by the composition root via `onLockCleared`.
  *
  * The URL adapter is the seam: browser history in the app
  * (`browserUrlAdapter`), a recording fake in tests.
@@ -41,7 +41,7 @@ export interface AppStore {
   updateFilters(patch: Partial<FilterParams>): void;
   /** Explicitly clear an ID lock (fires onLockCleared). */
   unlock(): void;
-  /** Runs whenever a lock is cleared — by editing or by unlock(). */
+  /** Runs whenever a lock is cleared (only `unlock()` does so). */
   onLockCleared(callback: () => void): void;
 }
 
@@ -59,11 +59,8 @@ export function createAppStore(url: UrlAdapter): AppStore {
 
   function update(patch: Partial<AppState>): void {
     const next = { ...state.value, ...patch };
-    const clearsLock = state.value.ids.length > 0 && !("ids" in patch);
-    if (clearsLock) next.ids = [];
     state.value = next;
     url.write(serializeState(next));
-    if (clearsLock) fireLockCleared();
   }
 
   return {

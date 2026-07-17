@@ -129,15 +129,19 @@ export function App() {
         </div>
         <div class="control-stack">
           <LockBanner />
-          <WeekSection />
-          <FiltersSection />
-          <AdvancedSection />
-          <CountSection
-            count={countState}
-            generateDisabled={generateDisabled}
-            onRetry={() => retryTick.value++}
-            onGenerate={() => void generateSet()}
-          />
+          {/* Disabled + greyed while a set is locked; the LockBanner's
+              Unlock button sits outside this and stays live. */}
+          <fieldset class="lockable" disabled={store.state.value.ids.length > 0}>
+            <WeekSection />
+            <FiltersSection />
+            <AdvancedSection />
+            <CountSection
+              count={countState}
+              generateDisabled={generateDisabled}
+              onRetry={() => retryTick.value++}
+              onGenerate={() => void generateSet()}
+            />
+          </fieldset>
         </div>
         <details>
           <summary class="muted small">Debug: URL state &amp; seed</summary>
