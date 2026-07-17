@@ -113,7 +113,7 @@ export function ResultsPane({
     <main class="results">
       <h2>This week's set</h2>
       {s.status === "idle" && (
-        <p class="muted">Enter your key, tune the filters, hit Generate.</p>
+        <p class="muted">Tune the filters, hit Generate.</p>
       )}
       {s.status === "loading" && (
         <div class="sound-grid">

@@ -8,7 +8,7 @@
 
 import { computed, effect, signal } from "@preact/signals";
 import { AdvancedSection } from "./components/AdvancedSection";
-import { ApiKeySection } from "./components/ApiKeySection";
+import { ApiKeyControls, KeyOnboarding } from "./components/ApiKeySection";
 import { CountSection, type CountState } from "./components/CountSection";
 import { FiltersSection } from "./components/FiltersSection";
 import { LockBanner } from "./components/LockBanner";
@@ -115,29 +115,36 @@ export function App() {
       <aside class="controls">
         <h1>Cotygodniowy Flip</h1>
         <p class="muted">Weekly sample challenge — deterministic Freesound picks.</p>
-        <ApiKeySection />
-        <LockBanner />
-        <WeekSection />
-        <FiltersSection />
-        <AdvancedSection />
-        <CountSection
-          count={countState}
-          generateDisabled={generateDisabled}
-          onRetry={() => retryTick.value++}
-          onGenerate={() => void generateSet()}
-        />
+        <ApiKeyControls />
+        {/* fieldset[disabled] inert-ifies every control while no key exists */}
+        <fieldset class="gated" disabled={apiKey.value === ""}>
+          <LockBanner />
+          <WeekSection />
+          <FiltersSection />
+          <AdvancedSection />
+          <CountSection
+            count={countState}
+            generateDisabled={generateDisabled}
+            onRetry={() => retryTick.value++}
+            onGenerate={() => void generateSet()}
+          />
+        </fieldset>
         <details>
           <summary class="muted small">Debug: URL state &amp; seed</summary>
           <pre>{JSON.stringify(store.state.value, null, 2)}</pre>
           <pre>{store.seed.value}</pre>
         </details>
       </aside>
-      <ResultsPane
-        set={setState}
-        copied={copied}
-        onGenerate={() => void generateSet()}
-        onCopyLink={(slots) => void copySetLink(slots)}
-      />
+      {apiKey.value === "" ? (
+        <KeyOnboarding />
+      ) : (
+        <ResultsPane
+          set={setState}
+          copied={copied}
+          onGenerate={() => void generateSet()}
+          onCopyLink={(slots) => void copySetLink(slots)}
+        />
+      )}
     </div>
   );
 }

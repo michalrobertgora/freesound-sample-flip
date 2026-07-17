@@ -114,6 +114,38 @@ button:disabled {
   display: block;
 }
 
+/* No-key gate: the whole controls stack goes inert and dims. */
+fieldset.gated {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+fieldset.gated[disabled] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.key-onboarding {
+  max-width: 26rem;
+  margin: 3rem auto;
+}
+
+.key-onboarding .key-input {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+
+.key-status {
+  margin: 0.4rem 0;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
