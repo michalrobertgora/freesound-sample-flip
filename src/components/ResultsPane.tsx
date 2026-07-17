@@ -117,12 +117,12 @@ function SpeedControl() {
         aria-pressed={vinyl}
         title={
           vinyl
-            ? "Vinyl: pitch shifts with speed — click for constant pitch"
-            : "Constant pitch: speed only — click for vinyl pitch-shift"
+            ? "Re-pitch: pitch shifts with speed — click for constant pitch"
+            : "Constant pitch: speed only — click for re-pitch"
         }
         onClick={() => setPreservePitch(vinyl)}
       >
-        {vinyl ? "vinyl" : "keep pitch"}
+        {vinyl ? "re-pitch" : "keep pitch"}
       </button>
     </span>
   );

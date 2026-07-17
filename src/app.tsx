@@ -112,9 +112,9 @@ export function App() {
                   Freesound account.
                 </p>
                 <p>
-                  Preview each sample at 0.5× / 1× / 2× speed, with variable
-                  (vinyl) or constant pitch — to feel how it will behave when
-                  you repitch it on your instruments later.
+                  Preview each sample at 0.5× / 1× / 2× speed, with re-pitch
+                  (pitch shifts with speed) or constant pitch — to feel how it
+                  will behave when you repitch it on your instruments later.
                 </p>
               </div>
             </details>

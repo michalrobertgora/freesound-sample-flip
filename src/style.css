@@ -490,7 +490,9 @@ details.advanced summary {
   box-shadow: 4px 4px 0 color-mix(in srgb, var(--hot) 45%, transparent);
 }
 
-.card.playing .actions button {
+/* Direct child only — the Play/Stop button. The speed-control buttons are
+ * nested in `.speed` and must keep their own active-state styling. */
+.card.playing .actions > button {
   border-color: var(--hot);
   color: var(--hot);
   background: color-mix(in srgb, var(--hot) 10%, transparent);
