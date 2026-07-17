@@ -115,17 +115,25 @@ export function App() {
     <div class="layout">
       <aside class="controls">
         <div class="title-row">
-          <h1>Cotygodniowy Flip</h1>
-          <button
-            class="small theme-toggle"
-            onClick={toggleTheme}
-            title="Toggle light/dark theme"
-          >
-            {isDark.value ? "☀" : "☾"}
-          </button>
+          <h1>Freesound Flip</h1>
+          <span class="title-actions">
+            <details class="info-pop">
+              <summary aria-label="About this app" title="About">i</summary>
+              <div class="pop small">
+                Weekly sample challenge — deterministic Freesound picks. Same
+                week, salt, and filters produce the same set on any machine;
+                share a set link to pin the exact sounds.
+              </div>
+            </details>
+            <button
+              class="small theme-toggle"
+              onClick={toggleTheme}
+              title="Toggle light/dark theme"
+            >
+              {isDark.value ? "☀" : "☾"}
+            </button>
+          </span>
         </div>
-        <p class="muted">Weekly sample challenge — deterministic Freesound picks.</p>
-        <ApiKeyControls />
         {/* fieldset[disabled] inert-ifies every control while no key exists */}
         <fieldset class="gated" disabled={apiKey.value === ""}>
           <LockBanner />
@@ -139,6 +147,7 @@ export function App() {
             onGenerate={() => void generateSet()}
           />
         </fieldset>
+        <ApiKeyControls />
         <details>
           <summary class="muted small">Debug: URL state &amp; seed</summary>
           <pre>{JSON.stringify(store.state.value, null, 2)}</pre>

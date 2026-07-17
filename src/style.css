@@ -179,6 +179,56 @@ a:hover {
   border-radius: var(--radius-pill);
 }
 
+.title-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* About popover: CSS-only via <details>, anchored under the ⓘ button. */
+details.info-pop {
+  position: relative;
+}
+
+details.info-pop summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  font-family: var(--font-display);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+
+details.info-pop summary::-webkit-details-marker {
+  display: none;
+}
+
+details.info-pop[open] summary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+details.info-pop .pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 10;
+  width: 17rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 .status {
   margin: 0.5rem 0;
 }

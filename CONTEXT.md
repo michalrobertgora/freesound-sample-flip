@@ -1,4 +1,4 @@
-# CONTEXT.md — Cotygodniowy Flip
+# CONTEXT.md — Freesound Flip (formerly Cotygodniowy Flip)
 
 Domain glossary for the weekly sample challenge. Use these terms exactly in
 issues, tests, and proposals; the *Avoid* notes are deliberate.

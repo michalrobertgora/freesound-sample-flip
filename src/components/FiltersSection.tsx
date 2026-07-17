@@ -144,6 +144,40 @@ export function FiltersSection() {
           </label>
         ))}
       </fieldset>
+      <label class="field">
+        <span>Tonality</span>
+        <select
+          value={f.tonality}
+          onChange={(e) =>
+            store.updateFilters({ tonality: (e.target as HTMLSelectElement).value })
+          }
+        >
+          <option value="">Any</option>
+          {TONALITIES.map((t) => (
+            <option value={t} key={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div class="field">
+        <label class="inline">
+          <input
+            type="checkbox"
+            checked={f.loopable}
+            onChange={() => store.updateFilters({ loopable: !f.loopable })}
+          />{" "}
+          loopable
+        </label>
+        <label class="inline">
+          <input
+            type="checkbox"
+            checked={f.singleEvent}
+            onChange={() => store.updateFilters({ singleEvent: !f.singleEvent })}
+          />{" "}
+          single event
+        </label>
+      </div>
       <TagChips />
       <div class="field">
         <span>
@@ -185,40 +219,6 @@ export function FiltersSection() {
           </label>
         ))}
       </fieldset>
-      <label class="field">
-        <span>Tonality</span>
-        <select
-          value={f.tonality}
-          onChange={(e) =>
-            store.updateFilters({ tonality: (e.target as HTMLSelectElement).value })
-          }
-        >
-          <option value="">Any</option>
-          {TONALITIES.map((t) => (
-            <option value={t} key={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div class="field">
-        <label class="inline">
-          <input
-            type="checkbox"
-            checked={f.loopable}
-            onChange={() => store.updateFilters({ loopable: !f.loopable })}
-          />{" "}
-          loopable
-        </label>
-        <label class="inline">
-          <input
-            type="checkbox"
-            checked={f.singleEvent}
-            onChange={() => store.updateFilters({ singleEvent: !f.singleEvent })}
-          />{" "}
-          single event
-        </label>
-      </div>
     </section>
   );
 }

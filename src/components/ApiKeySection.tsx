@@ -62,7 +62,7 @@ export function KeyOnboarding() {
       <div class="key-onboarding">
         <h2>Connect Freesound</h2>
         <p class="muted">
-          Cotygodniowy Flip needs a free Freesound API key to fetch this
+          Freesound Flip needs a free Freesound API key to fetch this
           week's samples. Paste yours below and the controls unlock.
         </p>
         <KeyInput />
