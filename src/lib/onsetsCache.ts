@@ -26,10 +26,7 @@ export interface OnsetsCache {
   ensureOnsets(id: number): void;
 }
 
-export function createOnsetsCache(
-  transport: Transport,
-  getToken: () => string,
-): OnsetsCache {
+export function createOnsetsCache(transport: Transport): OnsetsCache {
   const cache = new Map<number, number[] | null>();
   const inFlight = new Set<number>();
   // Bumped when any fetch settles, so subscribed components re-read.
@@ -41,14 +38,11 @@ export function createOnsetsCache(
       return cache.get(id);
     },
     ensureOnsets(id) {
-      const token = getToken();
-      if (!token || cache.has(id) || inFlight.has(id)) return;
+      if (cache.has(id) || inFlight.has(id)) return;
       inFlight.add(id);
       void (async () => {
         try {
-          const res = await transport(
-            `${API_BASE}/sounds/${id}/analysis/?token=${token}`,
-          );
+          const res = await transport(`${API_BASE}/sounds/${id}/analysis/`);
           if (res.status === 404) {
             cache.set(id, null); // no analysis for this sound — permanent
           } else if (res.status === 200) {

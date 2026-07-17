@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  API_BASE,
   buildCountUrl,
   fetchCount,
   makeCachedCountFetcher,
@@ -12,30 +13,28 @@ function fakeTransport(status: number, body: unknown): Transport {
 }
 
 describe("buildCountUrl", () => {
-  it("requests one result with only the count-relevant params", () => {
-    const url = buildCountUrl("SECRET", "ambient pad", "duration:[0.5 TO 30]");
+  it("requests one result with only the count-relevant params, no token", () => {
+    const url = buildCountUrl("ambient pad", "duration:[0.5 TO 30]");
     expect(url).toBe(
-      "https://freesound.org/apiv2/search/?page_size=1&fields=id&query=ambient+pad&filter=duration%3A%5B0.5+TO+30%5D&token=SECRET",
+      `${API_BASE}/search/?page_size=1&fields=id&query=ambient+pad&filter=duration%3A%5B0.5+TO+30%5D`,
     );
   });
 
   it("omits empty query and empty filter", () => {
-    const url = buildCountUrl("SECRET", "", "");
-    expect(url).toBe(
-      "https://freesound.org/apiv2/search/?page_size=1&fields=id&token=SECRET",
-    );
+    const url = buildCountUrl("", "");
+    expect(url).toBe(`${API_BASE}/search/?page_size=1&fields=id`);
   });
 });
 
 describe("fetchCount", () => {
   it("returns the count on success", async () => {
     const t = fakeTransport(200, { count: 8412, results: [] });
-    expect(await fetchCount(t, "k", "", "")).toEqual({ ok: true, count: 8412 });
+    expect(await fetchCount(t, "", "")).toEqual({ ok: true, count: 8412 });
   });
 
   it("maps 401 to invalid-key", async () => {
     const t = fakeTransport(401, { detail: "Invalid token." });
-    expect(await fetchCount(t, "bad", "", "")).toEqual({
+    expect(await fetchCount(t, "", "")).toEqual({
       ok: false,
       error: { kind: "invalid-key" },
     });
@@ -45,7 +44,7 @@ describe("fetchCount", () => {
     const t = fakeTransport(429, {
       detail: "Request was throttled. Expected available in 42 seconds.",
     });
-    expect(await fetchCount(t, "k", "", "")).toEqual({
+    expect(await fetchCount(t, "", "")).toEqual({
       ok: false,
       error: {
         kind: "rate-limited",
@@ -56,7 +55,7 @@ describe("fetchCount", () => {
 
   it("maps other failures to unexpected", async () => {
     const t500 = fakeTransport(500, {});
-    expect(await fetchCount(t500, "k", "", "")).toEqual({
+    expect(await fetchCount(t500, "", "")).toEqual({
       ok: false,
       error: { kind: "unexpected", message: "HTTP 500" },
     });
@@ -64,13 +63,13 @@ describe("fetchCount", () => {
     const tThrow: Transport = async () => {
       throw new Error("offline");
     };
-    expect(await fetchCount(tThrow, "k", "", "")).toEqual({
+    expect(await fetchCount(tThrow, "", "")).toEqual({
       ok: false,
       error: { kind: "unexpected", message: "offline" },
     });
 
     const tMalformed = fakeTransport(200, { results: [] });
-    const r = await fetchCount(tMalformed, "k", "", "");
+    const r = await fetchCount(tMalformed, "", "");
     expect(r.ok).toBe(false);
   });
 });
@@ -80,17 +79,17 @@ describe("makeCachedCountFetcher", () => {
     const spy = vi.fn(fakeTransport(200, { count: 7 }));
     const cached = makeCachedCountFetcher(spy);
 
-    expect(await cached("k", "rain", "duration:[0.5 TO 30]")).toEqual({
+    expect(await cached("rain", "duration:[0.5 TO 30]")).toEqual({
       ok: true,
       count: 7,
     });
-    expect(await cached("k", "rain", "duration:[0.5 TO 30]")).toEqual({
+    expect(await cached("rain", "duration:[0.5 TO 30]")).toEqual({
       ok: true,
       count: 7,
     });
     expect(spy).toHaveBeenCalledTimes(1);
 
-    await cached("k", "rain", "duration:[0.5 TO 20]");
+    await cached("rain", "duration:[0.5 TO 20]");
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
@@ -102,9 +101,9 @@ describe("makeCachedCountFetcher", () => {
     }));
     const cached = makeCachedCountFetcher(spy);
 
-    expect((await cached("k", "", "")).ok).toBe(false);
+    expect((await cached("", "")).ok).toBe(false);
     status = 200;
-    expect(await cached("k", "", "")).toEqual({ ok: true, count: 3 });
+    expect(await cached("", "")).toEqual({ ok: true, count: 3 });
     expect(spy).toHaveBeenCalledTimes(2);
   });
 });

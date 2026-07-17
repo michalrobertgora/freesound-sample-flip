@@ -3,7 +3,6 @@ import type { FreesoundError } from "../lib/freesound";
 import { errorMessage } from "./errorMessage";
 
 export type CountState =
-  | { status: "no-key" }
   | { status: "loading" }
   | { status: "ok"; count: number }
   | { status: "error"; error: FreesoundError };
@@ -23,9 +22,6 @@ export function CountSection({
   return (
     <section>
       <h2>Matching sounds</h2>
-      {c.status === "no-key" && (
-        <p class="status muted">Enter your API key to see how many sounds match.</p>
-      )}
       {c.status === "loading" && <p class="status muted">Counting…</p>}
       {c.status === "ok" && c.count > 0 && (
         <p class="status">

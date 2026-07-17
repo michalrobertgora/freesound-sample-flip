@@ -6,8 +6,8 @@ export function errorMessage(error: FreesoundError) {
     case "invalid-key":
       return (
         <p class="status error">
-          Freesound rejected that API key. Check for typos or missing
-          characters — or apply for a fresh key via the link above.
+          The sample service is temporarily unavailable (the server's Freesound
+          access was rejected). This is on our end — please try again later.
         </p>
       );
     case "rate-limited":

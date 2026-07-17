@@ -75,12 +75,7 @@ export type LockedResult =
   | { ok: true; slots: LockedSlot[] }
   | { ok: false; error: FreesoundError };
 
-function buildPageUrl(
-  token: string,
-  query: string,
-  filter: string,
-  page: number,
-): string {
+function buildPageUrl(query: string, filter: string, page: number): string {
   const q = new URLSearchParams();
   q.set("page_size", String(PAGE_SIZE));
   q.set("fields", SOUND_FIELDS);
@@ -88,7 +83,6 @@ function buildPageUrl(
   q.set("page", String(page));
   if (query) q.set("query", query);
   if (filter) q.set("filter", filter);
-  q.set("token", token);
   return `${API_BASE}/search/?${q.toString()}`;
 }
 
@@ -116,14 +110,12 @@ async function fetchPage(
  */
 export async function resolveLockedSet(
   transport: Transport,
-  token: string,
   ids: number[],
 ): Promise<LockedResult> {
   const q = new URLSearchParams();
   q.set("page_size", String(PAGE_SIZE));
   q.set("fields", SOUND_FIELDS);
   q.set("filter", `id:(${ids.join(" OR ")})`);
-  q.set("token", token);
 
   const fetched = await fetchPage(transport, `${API_BASE}/search/?${q.toString()}`);
   if (!fetched.ok) return fetched;
@@ -142,13 +134,12 @@ export async function resolveLockedSet(
 /** Resolve the week's set deterministically from (week, salt, count, filters). */
 export async function resolveSeededSet(
   transport: Transport,
-  token: string,
   state: AppState,
 ): Promise<ResolveResult> {
   const query = normalizeText(state.filters.query);
   const filter = canonicalFilterString(state.filters);
 
-  const counted = await fetchCount(transport, token, query, filter);
+  const counted = await fetchCount(transport, query, filter);
   if (!counted.ok) return counted;
   if (counted.count === 0) return { ok: false, error: { kind: "zero-results" } };
 
@@ -163,7 +154,7 @@ export async function resolveSeededSet(
   const soundByIndex = new Map<number, FreesoundSound>();
 
   for (const page of pages) {
-    const fetched = await fetchPage(transport, buildPageUrl(token, query, filter, page));
+    const fetched = await fetchPage(transport, buildPageUrl(query, filter, page));
     if (!fetched.ok) return fetched;
     const start = (page - 1) * PAGE_SIZE;
     fetched.results.forEach((sound, offset) => {

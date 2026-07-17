@@ -47,7 +47,13 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
 - **Set resolution** (`src/lib/resolveSet.ts`) — the seam between app state
   and the network: state + transport in, resolved set or typed error out.
 - **Transport** (`src/lib/freesound.ts`) — fetch-shaped adapter; real `fetch`
-  in the app, fakes in tests. The seam every network test crosses.
+  in the app, fakes in tests. The seam every network test crosses. JSON API
+  calls go to the **Worker proxy** (`API_BASE`, override via `VITE_API_BASE`),
+  which injects the token server-side — the browser holds no key. Preview mp3s
+  and waveform PNGs still load straight from the Freesound CDN (token-free).
+- **API proxy** (`proxy/`) — a Cloudflare Worker fronting `/apiv2/search/` and
+  `/apiv2/sounds/<id>/analysis/`; deployed separately from Pages. The reason
+  the app needs no API-key entry.
 - **Composition root** (`src/app.tsx`) — wiring only: creates nothing but
   connections between the modules above and renders `src/components/`.
 
