@@ -1,5 +1,4 @@
 import { currentIsoWeek, shiftIsoWeek } from "../lib/isoWeek";
-import { MAX_SAMPLES, MIN_SAMPLES } from "../lib/urlState";
 import { store } from "../store";
 
 export function WeekSection() {
@@ -26,26 +25,6 @@ export function WeekSection() {
             this week
           </button>
         )}
-      </div>
-      <div class="field">
-        <span>Samples</span>
-        <div class="week-row">
-          <button
-            aria-label="Fewer samples"
-            disabled={s.sampleCount <= MIN_SAMPLES}
-            onClick={() => store.update({ sampleCount: s.sampleCount - 1 })}
-          >
-            ◀
-          </button>
-          <strong class="week-label count-label">{s.sampleCount}</strong>
-          <button
-            aria-label="More samples"
-            disabled={s.sampleCount >= MAX_SAMPLES}
-            onClick={() => store.update({ sampleCount: s.sampleCount + 1 })}
-          >
-            ▶
-          </button>
-        </div>
       </div>
       <label class="field">
         <span>

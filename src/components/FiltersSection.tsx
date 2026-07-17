@@ -1,4 +1,5 @@
 import { ALL_CATEGORIES, DEFAULT_FILTERS, formatNum } from "../lib/filters";
+import { MAX_SAMPLES, MIN_SAMPLES } from "../lib/urlState";
 import { store } from "../store";
 
 /** Log-scale duration slider: position 0..steps ↔ seconds, quantized to
@@ -115,12 +116,33 @@ function TagChips() {
 }
 
 export function FiltersSection() {
-  const f = store.state.value.filters;
+  const s = store.state.value;
+  const f = s.filters;
   const dmin = f.durationMin ?? DUR_SLIDER.min;
   const dmax = f.durationMax ?? DUR_SLIDER.max;
   return (
     <section>
       <h2>Filters</h2>
+      <div class="field">
+        <span>Samples</span>
+        <div class="week-row">
+          <button
+            aria-label="Fewer samples"
+            disabled={s.sampleCount <= MIN_SAMPLES}
+            onClick={() => store.update({ sampleCount: s.sampleCount - 1 })}
+          >
+            ◀
+          </button>
+          <strong class="week-label count-label">{s.sampleCount}</strong>
+          <button
+            aria-label="More samples"
+            disabled={s.sampleCount >= MAX_SAMPLES}
+            onClick={() => store.update({ sampleCount: s.sampleCount + 1 })}
+          >
+            ▶
+          </button>
+        </div>
+      </div>
       <label class="field">
         <span>Search</span>
         <input
