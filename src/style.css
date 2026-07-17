@@ -775,8 +775,11 @@ details.advanced summary {
 .pitch-toggle {
   margin-left: 0.3rem;
   letter-spacing: 0.02em;
-  /* Fixed width so the label swap (re-pitch ↔ keep pitch) doesn't resize it. */
-  min-width: 4.5rem;
+  /* Fixed width so the label swap (re-pitch ↔ keep pitch) doesn't resize it.
+   * The UI font is monospace, so "keep pitch" is ~5.6rem wide; 6rem clears
+   * that with a margin for cross-browser render variance. rem is
+   * root-relative, so this floor is resolution-independent. */
+  min-width: 6rem;
   text-align: center;
 }
 
