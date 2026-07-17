@@ -93,7 +93,9 @@ function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: stri
   );
 }
 
-const SPEED_PRESETS = [0.5, 1, 2];
+// 0.25 is the practical floor — audible in Firefox (mutes below it) and
+// Chromium (YouTube's slowest). Don't add presets below it.
+const SPEED_PRESETS = [0.25, 0.5, 1, 2];
 
 /** Global playback-speed presets + a vinyl/constant-pitch toggle. Controls
  * the one shared player, so every card shows the same active state. */
