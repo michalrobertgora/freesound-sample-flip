@@ -36,8 +36,10 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
   state and the lock-clearing invariant. Seam: the **URL adapter**
   (browser history in the app, recording fake in tests).
 - **Player** (`src/lib/player.ts`) — deep module owning the one shared audio
-  element. Interface: `playingId`, `position`, `toggle(id, src)`,
-  `seekTo(id, src, seconds)`, `stop()`. Domain-free.
+  element. Interface: `playingId`, `position`, `rate`, `preservePitch`,
+  `toggle(id, src)`, `seekTo(id, src, seconds)`, `setRate(n)`,
+  `setPreservePitch(on)`, `stop()`. Domain-free. Speed/pitch are global and
+  sticky across sounds (re-asserted after each `src` swap).
 - **Onsets cache** (`src/lib/onsetsCache.ts`, wired in `src/lib/onsets.ts`) —
   lazy per-sound `onset_times` from the analysis resource, fetched on scrub
   intent, cached per session (404 permanent, other failures retryable).
