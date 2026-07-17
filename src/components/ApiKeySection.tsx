@@ -17,6 +17,9 @@ effect(() => {
   if (apiKey.value === "") editorOpen.value = false;
 });
 
+/** Freesound keys are ~40 chars; below this a keystroke can't be one. */
+const LOOKS_LIKE_KEY = 20;
+
 function KeyInput() {
   return (
     <input
@@ -25,7 +28,18 @@ function KeyInput() {
       value={apiKey.value}
       placeholder="Paste your API key"
       autocomplete="off"
-      onInput={(e) => saveApiKey((e.target as HTMLInputElement).value)}
+      // Saving on every keystroke would unmount this input (the key gate
+      // swaps whole panes) after the first typed character. Commit
+      // immediately only when the value looks like a real key (a paste),
+      // otherwise on Enter/blur.
+      onInput={(e) => {
+        const v = (e.target as HTMLInputElement).value;
+        if (v.trim().length >= LOOKS_LIKE_KEY) saveApiKey(v);
+      }}
+      onChange={(e) => saveApiKey((e.target as HTMLInputElement).value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") saveApiKey((e.target as HTMLInputElement).value);
+      }}
     />
   );
 }

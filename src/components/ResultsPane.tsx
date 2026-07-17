@@ -131,7 +131,10 @@ export function ResultsPane({
       {s.status === "ok" && (
         <>
           <p class="actions">
-            <button onClick={() => onCopyLink(s.slots)}>
+            <button
+              class={copied.value ? "copied" : ""}
+              onClick={() => onCopyLink(s.slots)}
+            >
               {copied.value ? "Copied!" : "Copy set link"}
             </button>
             <span class="muted small">
