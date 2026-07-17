@@ -46,6 +46,10 @@
 :root {
   font-family: var(--font-ui);
   line-height: 1.55;
+  /* Reserve the page scrollbar's space always, so the layout width doesn't
+   * change when a vertical scrollbar appears (e.g. the taller locked view).
+   * No effect with overlay scrollbars (mobile/touch). */
+  scrollbar-gutter: stable;
 }
 
 * {
