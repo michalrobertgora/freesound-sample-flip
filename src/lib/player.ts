@@ -8,14 +8,45 @@
  * module knows nothing about Freesound sounds or preview variants.
  */
 
-import { signal, type ReadonlySignal } from "@preact/signals";
+import { effect, signal, type ReadonlySignal } from "@preact/signals";
 
 const playingIdSignal = signal<number | null>(null);
 
 /** Which id is playing right now, or null. Readonly to callers. */
 export const playingId: ReadonlySignal<number | null> = playingIdSignal;
 
+const positionSignal = signal(0);
+
+/**
+ * Playback position of the playing id, in seconds. Driven by rAF while
+ * playing — `timeupdate` can fire as slowly as ~4 Hz, too choppy for a
+ * playhead. Meaningless (stale) while `playingId` is null.
+ */
+export const position: ReadonlySignal<number> = positionSignal;
+
 const audio = new Audio();
+
+let rafId = 0;
+effect(() => {
+  cancelAnimationFrame(rafId);
+  if (playingIdSignal.value === null) return;
+  const tick = () => {
+    positionSignal.value = audio.currentTime;
+    rafId = requestAnimationFrame(tick);
+  };
+  rafId = requestAnimationFrame(tick);
+});
+
+// Belt-and-braces from the research doc: a seek issued at HAVE_NOTHING is
+// queued by the spec as the default playback start position, but historic
+// WebKit builds have dropped it — re-assert once metadata arrives.
+let pendingSeek: number | null = null;
+audio.addEventListener("loadedmetadata", () => {
+  if (pendingSeek !== null && Math.abs(audio.currentTime - pendingSeek) > 0.5) {
+    audio.currentTime = pendingSeek;
+  }
+  pendingSeek = null;
+});
 
 // `pause` also fires on ended and on OS-level pauses (media keys); the
 // paused check keeps a queued event from clearing a just-started track.
@@ -40,8 +71,28 @@ export function toggle(id: number, src: string): void {
     return;
   }
   audio.src = src;
+  positionSignal.value = 0;
   playingIdSignal.value = id;
   audio.play().catch(() => {
     if (playingIdSignal.value === id) playingIdSignal.value = null;
   });
+}
+
+/**
+ * Move the playhead of `id` to `seconds`, starting playback of `src`
+ * there if `id` isn't already playing. Safe before the file has loaded:
+ * the seek is queued as the start position (and re-asserted on
+ * loadedmetadata for old-WebKit safety).
+ */
+export function seekTo(id: number, src: string, seconds: number): void {
+  if (playingIdSignal.value !== id) {
+    audio.src = src;
+    playingIdSignal.value = id;
+    audio.play().catch(() => {
+      if (playingIdSignal.value === id) playingIdSignal.value = null;
+    });
+  }
+  audio.currentTime = seconds;
+  if (audio.readyState === HTMLMediaElement.HAVE_NOTHING) pendingSeek = seconds;
+  positionSignal.value = seconds;
 }

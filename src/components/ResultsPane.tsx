@@ -6,7 +6,8 @@ import {
   previewUrl,
 } from "../lib/display";
 import type { FreesoundError } from "../lib/freesound";
-import { playingId, toggle } from "../lib/player";
+import { playingId, position, seekTo, toggle } from "../lib/player";
+import { pointerFraction } from "../lib/scrub";
 import type { FreesoundSound, LockedSlot } from "../lib/resolveSet";
 import { store } from "../store";
 import { errorMessage } from "./errorMessage";
@@ -17,14 +18,54 @@ export type SetState =
   | { status: "ok"; slots: LockedSlot[] }
   | { status: "error"; error: FreesoundError };
 
+/** The waveform PNG as a scrubber: click/drag moves the playhead there,
+ * starting playback if this sound wasn't playing. The PNG maps time 1:1
+ * across its width, so pointer fraction × duration is the seek target. */
+function WaveScrubber({ sound, preview }: { sound: FreesoundSound; preview: string }) {
+  const playing = playingId.value === sound.id;
+  const frac =
+    playing && sound.duration > 0
+      ? Math.min(position.value / sound.duration, 1)
+      : 0;
+  const seekAtPointer = (e: PointerEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const f = pointerFraction(e.clientX, rect.left, rect.width);
+    seekTo(sound.id, preview, f * sound.duration);
+  };
+  return (
+    <div
+      class="wave-wrap"
+      onPointerDown={(e) => {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        seekAtPointer(e);
+      }}
+      onPointerMove={(e) => {
+        if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId))
+          seekAtPointer(e);
+      }}
+    >
+      <img class="waveform" src={sound.images["waveform_m"]} alt="" loading="lazy" />
+      {playing && (
+        <>
+          <div class="wave-elapsed" style={{ width: `${frac * 100}%` }} />
+          <div class="wave-playhead" style={{ left: `${frac * 100}%` }} />
+        </>
+      )}
+    </div>
+  );
+}
+
 function SoundCard({ sound }: { sound: FreesoundSound }) {
   const playing = playingId.value === sound.id;
   const preview = previewUrl(sound.previews);
   return (
     <article class={playing ? "card playing" : "card"}>
-      {sound.images?.["waveform_m"] && (
-        <img class="waveform" src={sound.images["waveform_m"]} alt="" loading="lazy" />
-      )}
+      {sound.images?.["waveform_m"] &&
+        (preview ? (
+          <WaveScrubber sound={sound} preview={preview} />
+        ) : (
+          <img class="waveform" src={sound.images["waveform_m"]} alt="" loading="lazy" />
+        ))}
       <div class="card-body">
         <h3 class="card-title">
           <a href={sound.url} target="_blank" rel="noreferrer">

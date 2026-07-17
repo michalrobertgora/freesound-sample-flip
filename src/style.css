@@ -505,6 +505,39 @@ details.advanced summary {
   filter: sepia(0.28) contrast(1.02);
 }
 
+/* Waveform as scrubber: the wrap owns pointer events; overlays are
+ * inert. touch-action:none so a touch drag scrubs instead of scrolling. */
+.wave-wrap {
+  position: relative;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.wave-wrap img {
+  -webkit-user-drag: none;
+}
+
+.wave-elapsed {
+  position: absolute;
+  top: 0;
+  bottom: 1px;
+  left: 0;
+  background: color-mix(in srgb, var(--hot) 16%, transparent);
+  pointer-events: none;
+}
+
+.wave-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 1px;
+  width: 2px;
+  transform: translateX(-1px);
+  background: var(--hot);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--hot) 60%, transparent);
+  pointer-events: none;
+}
+
 .card-body {
   padding: 0.6rem 0.75rem 0.75rem;
 }
