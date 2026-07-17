@@ -1,10 +1,10 @@
-# Research: Filtering Freesound APIv2 search by Broad Sound Taxonomy category
+# Filtering Freesound APIv2 search by Broad Sound Taxonomy category
 
 Date: 2026-07-17. Sources: Freesound APIv2 docs and the MTG/freesound source repo (authoritative for field spellings). No live API calls were made.
 
 ## Verdicts
 
-### 1. Filter field name and value syntax — SUPPORTED: `category` (display names, not codes)
+### 1. Filter field name and value syntax — `category` (display names, not codes)
 
 The search endpoint's `filter` parameter accepts any Sound Instance field marked "yes" in the filtering column. From the docs table ([resources_apiv2.html](https://freesound.org/docs/api/resources_apiv2.html), Response (sound instance)):
 
@@ -37,7 +37,7 @@ The site itself links category searches as `f=category:%22Sound effects%22` (quo
 - `category_code` has a BLANK filtering column in the docs (not "yes"), and in source it is a derived serializer value, not a Solr field — [`apiv2/views.py`](https://github.com/MTG/freesound/blob/master/apiv2/views.py) computes it from `category` + `subcategory` at response time; [`utils/search/backends/solr555pysolr.py`](https://github.com/MTG/freesound/blob/master/utils/search/backends/solr555pysolr.py) indexes only the name fields (`SEARCH_SOUNDS_FIELD_CATEGORY`/`_SUBCATEGORY` as string dynamic fields).
 - `bst_category` exists only as an upload/describe/edit request parameter ("The ID of a category to be assigned to the sound"), not a search filter.
 
-### 2. Multi-value OR — SUPPORTED (docs show the operator; quoted-value combo untested)
+### 2. Multi-value OR — supported (docs show the operator; quoted-value combo untested)
 
 Docs, verbatim:
 
@@ -45,7 +45,7 @@ Docs, verbatim:
 
 `category` is indexed as a Solr string field, so `category:("Music" OR "Speech")` is standard Solr syntax and should work. The docs never show OR combined with quoted multi-word values, so `category:("Sound effects" OR "Music")` specifically is UNVERIFIED — see probe below. A guaranteed-safe equivalent is field-level OR, which the docs' geotag examples demonstrate: `filter=category:"Sound effects" OR category:"Music"`.
 
-### 3. `fields=` on search results — SUPPORTED
+### 3. `fields=` on search results — supported
 
 The search `fields` parameter accepts "any of those listed in Response (sound instance)". The sound instance table lists (verbatim):
 
@@ -55,7 +55,7 @@ The search `fields` parameter accepts "any of those listed in Response (sound in
 
 So `fields=id,name,category,subcategory,category_code` works; response values look like `"category": "Sound effects"`, `"category_code": "fx-a"`. Not in the default field set (`fields=id,name,tags,username,license` by default) — request it explicitly.
 
-### 4. Subcategory — SUPPORTED: `subcategory`
+### 4. Subcategory — `subcategory`
 
 Docs, verbatim (note the docs' own typo "Subategory"):
 

@@ -1,14 +1,14 @@
-# Playback-rate (½× / 2×) for the preview player
+# Playback rate for the preview player
 
-Decision-focused research for adding variable-speed playback to the shared
-preview player (`src/lib/player.ts`, one `HTMLAudioElement`). Primary sources
-only: MDN Web Docs, WHATWG HTML Living Standard, Apple developer docs.
+Research on adding variable-speed playback to the shared preview player
+(`src/lib/player.ts`, one `HTMLAudioElement`). Sources: MDN Web Docs, WHATWG
+HTML Living Standard, Apple developer docs.
 
-**Bottom line:** this is a two-property feature — `audio.playbackRate` for
-speed and `audio.preservesPitch` for the vinyl-vs-timestretch choice. Both are
-Baseline "widely available" (since Dec 2023). The scrubber needs no change:
-`currentTime` advances at the rate for free. The only real work is making rate
-**sticky across `src` swaps**, because the spec resets it on every load.
+Summary: this is a two-property feature — `audio.playbackRate` for speed and
+`audio.preservesPitch` for the pitch-shift vs. time-stretch choice. Both are
+Baseline (widely available since December 2023). The scrubber needs no change;
+`currentTime` advances at the effective rate. The one required piece of work is
+keeping the rate sticky across `src` swaps, since a load resets it.
 
 ---
 
@@ -41,9 +41,8 @@ distinguishes the two properties explicitly:
 
 Source: <https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Audio_and_video_delivery/WebAudio_playbackRate_explained>
 
-**Persist across a `src` change? NO — this is the important one.** The rate a
-freshly loaded resource plays at comes from `defaultPlaybackRate`, not the last
-`playbackRate`. MDN, verbatim:
+**Persist across a `src` change? No.** The rate a freshly loaded resource plays
+at comes from `defaultPlaybackRate`, not the last `playbackRate`. MDN:
 
 > we also have a `defaultPlaybackRate` property available, which lets us set the
 > default playback rate: the playback rate to which the media resets; for
@@ -125,7 +124,7 @@ Source: <https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/prese
 
 ## 3. Interaction with the scrubber / `position` tracking
 
-**The rAF playhead stays correct for free.** Our `position` signal reads
+**The rAF playhead stays correct without extra code.** The `position` signal reads
 `audio.currentTime` each frame; `currentTime` is the official playback position,
 which the spec advances *at* the effective rate (rate = normal × `playbackRate`).
 At 2× the clock ticks twice as fast, at 0.5× half as fast, so `position.value /

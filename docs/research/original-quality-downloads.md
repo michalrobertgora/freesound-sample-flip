@@ -1,10 +1,10 @@
-# Research: Original-quality (wav/aiff/flac) downloads from the Freesound API
+# Original-quality (wav/aiff/flac) downloads from the Freesound API
 
 Date: 2026-07-17. Sources: Freesound APIv2 docs ([authentication.html](https://freesound.org/docs/api/authentication.html), [resources_apiv2.html](https://freesound.org/docs/api/resources_apiv2.html), [overview.html](https://freesound.org/docs/api/overview.html), [terms_of_use.html](https://freesound.org/docs/api/terms_of_use.html)) and the [MTG/freesound](https://github.com/MTG/freesound) source (`freesound/settings.py`, `apiv2/views.py`, `apiv2/urls.py`). One live unauthenticated header check against the download endpoint (expected-401, no credentials sent).
 
 ## Verdicts
 
-### 1. Endpoint — `GET /apiv2/sounds/<sound_id>/download/`; OAuth2 REQUIRED, token auth is NOT enough (CONFIRMED)
+### 1. Endpoint — `GET /apiv2/sounds/<sound_id>/download/`; requires OAuth2, token auth is insufficient
 
 From [resources_apiv2.html](https://freesound.org/docs/api/resources_apiv2.html), Sound Download resource:
 
@@ -18,7 +18,7 @@ Our current pasted-API-key token auth cannot reach this endpoint. Confirmed live
 
 Source corroboration ([`apiv2/urls.py`](https://github.com/MTG/freesound/blob/master/apiv2/urls.py)): `path("sounds/<int:pk>/download/", views.DownloadSound.as_view(), ...)`. There is also an **undocumented-in-the-resource-list** companion, `sounds/<int:pk>/download/link/` (`views.DownloadLink`), which — behind the same OAuth2 wall — returns `{"download_link": ...}`, a JWT-signed URL at `download/<token>/` valid for `API_DOWNLOAD_TOKEN_LIFETIME = 60 * 60` (1 hour, [`freesound/settings.py`](https://github.com/MTG/freesound/blob/master/freesound/settings.py)) that is then fetchable **without auth headers** — useful as a plain `<a href>` once OAuth2 is in place.
 
-### 2. OAuth2 flow — authorization code grant ONLY; client secret REQUIRED at token exchange; no PKCE/implicit (CONFIRMED)
+### 2. OAuth2 flow — authorization code grant only; client secret required at token exchange; no PKCE/implicit
 
 From [authentication.html](https://freesound.org/docs/api/authentication.html):
 
@@ -36,7 +36,7 @@ There is **no documented client-side-only path**: a secretless public-client exc
 
 (matches `"ACCESS_TOKEN_EXPIRE_SECONDS": 60 * 60 * 24` in `freesound/settings.py`). A refresh token is issued alongside; refresh uses `grant_type=refresh_token` and — same endpoint — again requires `client_secret`. Expired tokens 401 with an "Expired token" error.
 
-### 3. CORS — OPEN; browser calls to /apiv2/ (incl. download) are CORS-readable (CONFIRMED with one caveat)
+### 3. CORS — open; browser calls to /apiv2/ (incl. download) are CORS-readable (one caveat)
 
 Source ([`freesound/settings.py`](https://github.com/MTG/freesound/blob/master/freesound/settings.py)): `"corsheaders.middleware.CorsMiddleware"` in `MIDDLEWARE` and `CORS_ALLOW_ALL_ORIGINS = True` — site-wide, so it covers `/apiv2/oauth2/access_token/`, `/download/`, and `download/<token>/`.
 
@@ -52,7 +52,7 @@ Caveat: the actual file response is served via django-sendfile → nginx `X-Acce
 
 ### 4. Fallbacks
 
-- **(a) Link out to the sound page — WORKS TODAY.** Sound Instance `url` field (already in our fields list, `src/lib/resolveSet.ts`) is the freesound.org page; a logged-in user clicks Download there. Zero API changes.
+- **(a) Link out to the sound page.** The Sound Instance `url` field (already in the fields list, `src/lib/resolveSet.ts`) is the freesound.org page; a logged-in user clicks Download there. No API changes.
 - **(b) Lossless preview transcodes — DO NOT EXIST.** The `previews` dictionary has exactly four lossy variants: `preview-hq-mp3` (~128kbps mp3), `preview-lq-mp3` (~64kbps mp3), `preview-hq-ogg` (~192kbps ogg), `preview-lq-ogg` (~80kbps ogg). No FLAC/wav transcode is served by the API. The original's format/size are only metadata: `type` — "The original type of the sound (wav, aif, aiff, ogg, mp3, m4a, or flac)" — and `filesize` (bytes), both filterable; useful for showing "Original: wav, 12.4 MB" next to a link.
 - **(c) Download fields.** `download` (URI, non-filterable) — "The URI for retrieving the original sound" (it's the OAuth2-gated endpoint from #1); `num_downloads` (int, filterable) — download count. No per-sound "downloadable" permission flag exists; all public sounds are downloadable by any logged-in user under the sound's CC license.
 - **(d) Terms on proxying.** [terms_of_use.html](https://freesound.org/docs/api/terms_of_use.html) doesn't forbid apps triggering downloads; relevant constraints: API is free "only for non-commercial purposes"; credit "Freesound and Freesound users in accordance to sounds' licenses"; don't abuse bandwidth; "Do not register multiple API keys to circumvent request limitations"; don't replicate Freesound wholesale. A user-initiated per-sound download with attribution is squarely normal API usage.

@@ -1,13 +1,13 @@
-# Scrubbable preview player — research
+# Scrubbable preview player
 
-Question: can we make the Freesound preview scrubbable (click/drag on the waveform to
-move the playhead), and what's the cheapest viable way? Probed 2026-07-17.
+Question: can the Freesound preview be made scrubbable (click/drag on the waveform to
+move the playhead), and by the cheapest viable method? Probed 2026-07-17.
 
 Probe target: `https://cdn.freesound.org/previews/587/587634_2214720-hq.mp3`
 (unauthenticated, extracted from the public sound page `https://freesound.org/s/587634/`;
 same host/path shape the API's `previews["preview-hq-mp3"]` returns).
 
-## 1. Seeking on preview files — YES
+## 1. Seeking on preview files — supported
 
 The CDN honors Range requests. Verbatim headers:
 
@@ -43,7 +43,7 @@ Freesound API docs on previews (https://freesound.org/docs/api/resources_apiv2.h
 
 Previews are served token-free from the CDN (verified above).
 
-## 2. CORS on preview media files — YES
+## 2. CORS on preview media files — supported
 
 `Access-Control-Allow-Origin: *` is present on the media file responses (see headers
 above), and `Range` is explicitly in `Access-Control-Allow-Headers`, with
@@ -114,7 +114,7 @@ the same math on pointermove with `setPointerCapture`. Progress indicator driven
 - **iOS Safari**: seeking un-buffered mp3s works only if the server supports byte
   ranges (Apple's documented requirement, satisfied per §1). Historic WebKit flakiness
   around seeking before any data has loaded is exactly the case the spec's
-  default-playback-start-position queueing covers; belt-and-braces is to re-assert
+  default-playback-start-position queueing covers; a defensive measure is to re-assert
   `currentTime` once on `loadedmetadata` if `Math.abs(actual - wanted) > 0.5`.
 - **`preservesPitch`**: irrelevant — it only affects `playbackRate` changes, not seeks.
 

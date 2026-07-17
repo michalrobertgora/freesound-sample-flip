@@ -1,11 +1,11 @@
 # Freesound Flip — API proxy (Cloudflare Worker)
 
-Fronts the token-authenticated Freesound JSON API so the browser never needs a
-key. The Freesound token lives in a Cloudflare **secret**; this Worker appends
-it and forwards only `/apiv2/search/` and `/apiv2/sounds/<id>/analysis/`.
+Fronts the token-authenticated Freesound JSON API so the browser sends no key.
+The token is stored as a Cloudflare secret; the Worker appends it and forwards
+only `/apiv2/search/` and `/apiv2/sounds/<id>/analysis/`.
 
-Preview mp3s and waveform PNGs are **not** proxied — they're served token-free
-from the Freesound CDN and the app hits them directly.
+Preview MP3s and waveform PNGs are not proxied; they are served token-free from
+the Freesound CDN and loaded directly by the app.
 
 ## One-time setup
 
@@ -13,43 +13,46 @@ From this `proxy/` directory:
 
 ```sh
 npm i -g wrangler          # if not already installed
-wrangler login             # opens a browser to authorize your Cloudflare account
+wrangler login             # authorize the Cloudflare account (opens a browser)
 wrangler secret put FREESOUND_KEY
-# ↑ paste the key from ../.env.local (FREESOUND_API_KEY) at the prompt.
-#   It goes straight to Cloudflare's secret store — never into git or the app.
+# Paste the key from ../.env.local (FREESOUND_API_KEY) at the prompt.
+# It is stored in Cloudflare's secret store, not in git or the app bundle.
 wrangler deploy
 ```
 
-`wrangler deploy` prints the live URL, e.g.
-`https://freesound-flip-proxy.<your-subdomain>.workers.dev`. Hand that URL to
-the app integration (ticket 22); it is not a secret.
+`wrangler deploy` prints the Worker URL, e.g.
+`https://freesound-flip-proxy.<subdomain>.workers.dev`. This URL is the app's
+API base (`API_BASE` in `src/lib/freesound.ts`); it is not a secret.
 
-## Verify (no token in the request)
+Note: after the first deploy, a `wrangler secret put` does not always publish a
+new active version on its own. If requests return `FREESOUND_KEY unset`, run
+`wrangler deploy` again to bind the stored secret.
+
+## Verify
 
 ```sh
-# Search should return JSON with a "count" field:
-curl "https://freesound-flip-proxy.<your-subdomain>.workers.dev/apiv2/search/?query=rain&fields=id&page_size=1"
+BASE=https://freesound-flip-proxy.<subdomain>.workers.dev
 
-# A disallowed browser origin is refused:
-curl -H "Origin: https://evil.example" \
-  "https://freesound-flip-proxy.<your-subdomain>.workers.dev/apiv2/search/?query=rain"
-# → 403 Forbidden origin
+# Search returns JSON with a "count" field (no token in the request):
+curl "$BASE/apiv2/search/?query=rain&fields=id&page_size=1"
 
-# A non-allowlisted path is refused:
-curl "https://freesound-flip-proxy.<your-subdomain>.workers.dev/apiv2/sounds/1/"
-# → 404 Not found
+# A disallowed browser origin is refused (403):
+curl -H "Origin: https://example.invalid" "$BASE/apiv2/search/?query=rain"
+
+# A non-allowlisted path is refused (404):
+curl "$BASE/apiv2/sounds/1/"
 ```
 
-## Local dev (optional)
+## Local dev
 
-Put the key in `proxy/.dev.vars` (git-ignored) as `FREESOUND_KEY=...`, then
+Put the key in `proxy/.dev.vars` (git-ignored) as `FREESOUND_KEY=...`, then run
 `wrangler dev`. Add `http://localhost:8787` to `ALLOWED_ORIGINS` in `worker.js`
-if you point a local app build at the local Worker.
+to point a local app build at the local Worker.
 
 ## Notes
 
-- The shared key means one **60/min · 2000/day** quota across everyone — fine
-  for a couple of users; a heavy burst surfaces as a `429` in the app.
-- The gates (origin allowlist + per-IP rate limit) make casual misuse annoying,
-  not impossible; the key stays revocable from your Freesound account.
+- The shared key is one quota for all users: 60 requests/minute, 2000/day. A
+  burst past the limit returns `429`, surfaced as an error in the app.
+- The origin allowlist and per-IP rate limit bound casual misuse; neither is a
+  hard guarantee. The key is revocable from the Freesound account.
 - Redeploy after any `worker.js` change with `wrangler deploy`.

@@ -19,8 +19,8 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
 - **Seeded mode** — the default resolution mode: count → quantize → cap →
   seeded draw of indices → pages sorted `created_asc`.
 - **Locked set** — a set pinned by explicit sound IDs (`ids=` in the URL);
-  bypasses the seeded pipeline entirely. Whoever generates first defines the
-  week's set. *Avoid:* "saved set", "playlist".
+  bypasses the seeded pipeline entirely. The first person to generate defines
+  the week's set. *Avoid:* "saved set", "playlist".
 - **Explicit unlock** — while a lock is active the filter pane is disabled
   (greyed), so the pinned set and the controls can't silently diverge. The
   **Unlock** button is the only way to clear a lock; it resets the shown set
@@ -34,7 +34,7 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
 ## Modules and seams
 
 - **App store** (`src/lib/appStore.ts`) — deep module owning URL-backed app
-  state and the lock-clearing invariant. Seam: the **URL adapter**
+  state and explicit unlock (see above). Seam: the **URL adapter**
   (browser history in the app, recording fake in tests).
 - **Player** (`src/lib/player.ts`) — deep module owning the one shared audio
   element. Interface: `playingId`, `position`, `rate`, `preservePitch`,
@@ -53,8 +53,8 @@ issues, tests, and proposals; the *Avoid* notes are deliberate.
   which injects the token server-side — the browser holds no key. Preview mp3s
   and waveform PNGs still load straight from the Freesound CDN (token-free).
 - **API proxy** (`proxy/`) — a Cloudflare Worker fronting `/apiv2/search/` and
-  `/apiv2/sounds/<id>/analysis/`; deployed separately from Pages. The reason
-  the app needs no API-key entry.
+  `/apiv2/sounds/<id>/analysis/`; deployed separately from Pages. It injects the
+  token, so the app requires no API-key entry.
 - **Composition root** (`src/app.tsx`) — wiring only: creates nothing but
   connections between the modules above and renders `src/components/`.
 
